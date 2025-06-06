@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<QBWCXML>
+  <AppName>VEG AAA 2025</AppName>
+  <AppID>IDNTS_G1203_2025</AppID>
+  <AppURL>http://192.168.1.122:88/QuickbooksWebConnectors/facilityremittanceaaa2025/mirror.php</AppURL>
+  <AppDescription>Customer payment Quickbooks Web Connectors Local Test</AppDescription>
+  <AppSupport>IT SUPPORT</AppSupport>
+  <UserName>test</UserName>
+  <OwnerID>{d8a37b21-2fc5-11f0-adab-089798facd91}</OwnerID>
+  <FileID>{e2b450fe-2fc5-11f0-adab-089798facd91}</FileID>
+  <QBType>QBFS</QBType>
+  <Style>Document</Style>
+  <AuthFlags>0xF</AuthFlags>
+<IsReadOnly>false</IsReadOnly>
+</QBWCXML>

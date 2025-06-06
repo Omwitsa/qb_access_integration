@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<QBWCXML>
+  <AppName>Veg AAA 2025</AppName>
+  <AppID>IDNTS_FSWO_2025</AppID>
+  <AppURL>http://192.168.1.170:88/VegQbIntegrator/VegaaaCofigs/mirror.php</AppURL>
+  <AppDescription>Customer payment Quickbooks Web Connectors 2025</AppDescription>
+  <AppSupport>IT SUPPORT</AppSupport>
+  <UserName>test</UserName>
+  <OwnerID>{8ed4fe38-3aef-11f0-ba43-000c29f83a26}</OwnerID>
+  <FileID>{99b0779a-3aef-11f0-ba43-000c29f83a26}</FileID>
+  <QBType>QBFS</QBType>
+  <Style>Document</Style>
+  <AuthFlags>0xF</AuthFlags>
+<IsReadOnly>false</IsReadOnly>
+</QBWCXML>

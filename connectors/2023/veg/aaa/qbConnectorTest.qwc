@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<QBWCXML>
+  <AppName>Veg AAA 2023 Test</AppName>
+  <AppID>IDNTS_FSTWO_2023</AppID>
+  <AppURL>http://192.168.1.170:88/VegQbIntegrator/VegaaaCofigs2023Test/mirror.php</AppURL>
+  <AppDescription>Invoice Quickbooks Web Connectors Test</AppDescription>
+  <AppSupport>IT SUPPORT</AppSupport>
+  <UserName>test</UserName>
+  <OwnerID>{37183269-3aef-11f0-ba43-000c29f83a26}</OwnerID>
+  <FileID>{412057be-3aef-11f0-ba43-000c29f83a26}</FileID>
+  <QBType>QBFS</QBType>
+  <Style>Document</Style>
+  <AuthFlags>0xF</AuthFlags>
+<IsReadOnly>false</IsReadOnly>
+</QBWCXML>
