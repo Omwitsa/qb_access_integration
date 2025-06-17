@@ -1,6 +1,6 @@
 ﻿<?php
    include 'access.php';
-   require_once '../../../../configs/2025/veg/aaatest/quickbooks.php';
+   require_once '../../../../configs/2025/veg/fg/quickbooks.php';
 
    $timecreated=date("Y-m-d h:i:sa");
    if($_GET["action"] === 'syncVegCreditNotes'){
@@ -35,7 +35,7 @@
             continue;
          }
 
-         $customerQuery = "SELECT CustomerName, CountryId, CustomerCode, CustomerFullName, CurrencyCode, QBCustomerNameAAA, FinalInvoiceType FROM Customer WHERE CustomerId = $custId";
+         $customerQuery = "SELECT CustomerName, CountryId, CustomerCode, CustomerFullName, CurrencyCode, QBCustomerNameFG, FinalInvoiceType FROM Customer WHERE CustomerId = $custId";
          $customerStatement = $con_gen->prepare($customerQuery);
          $customerStatement->execute();
          $customerResults=$customerStatement->fetchAll();
@@ -46,7 +46,8 @@
             $arAcc = "Accounts Receivable - $currency"; 
          }
          
-         $itemtax = $custCountryId === 7 ? 'Z' : 'E';
+         // $itemtax = $custCountryId === 7 ? 'Z' : 'E';
+         $itemtax= 'VAT Exempt'; // VAT Zero Rate
          if(!empty($qbCustName)){
             $insertQbCreditNotes = "INSERT INTO qb_creditmemo(TxnID, TimeCreated, TimeModified, Customer_FullName, ARAccount_FullName, Template_FullName, TxnDate, RefNumber, DueDate, ShipDate, Subtotal, ItemSalesTax_FullName, TotalAmount, CreditRemaining, CustomerSalesTaxCode_FullName) 
             VALUES('$txnID', NOW(), NOW(), '$qbCustName', '$arAcc', 'Custom Credit Memo', '$creditNoteDate', '$refNo', '$creditNoteDate', '$creditNoteDate', $amount, '$itemtax', $amount, $amount, '$taxName');";
@@ -56,7 +57,7 @@
             $creditNotelastid = $con_quickbooks->lastInsertId();
             // $dbConnectionString = "$mysql_username:$mysql_password@$mysql_servername:$mysql_port/$mysql_dbname";
             // $creditNotequeue = new QuickBooks_WebConnector_Queue('mysqli://'. $dbConnectionString);
-            $creditNotequeue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170:3306/testvegaaa2025');
+            $creditNotequeue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170:3306/vegfg2025');
             $creditNotequeue->enqueue(QUICKBOOKS_ADD_CREDITMEMO, $creditNotelastid, 903);
 
             $creditNoteLines = array();
@@ -82,7 +83,7 @@
                   $subitem=str_replace(" ","",substr($productRow[2], 0, 29))."".$productRow[7];
                }
 
-               $itemfullname = "Veggetables"; // Flowers, Roses
+               $itemfullname = "Open Bal"; //  Roses
                array_push($creditNoteLines, "('$txnID', '$itemfullname', '$descrip', $quantity, $rate, $lineAmount, '$taxName')");
             }
 

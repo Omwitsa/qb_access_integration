@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<QBWCXML>
+  <AppName>RM AAA 2025</AppName>
+  <AppID>IDNTS_RMAAAWO_2025</AppID>
+  <AppURL>http://192.168.1.170:88/VegQbIntegrator/configs/2025/rm/aaa/mirror.php</AppURL>
+  <AppDescription>RM AAA 2025 Quickbooks Web Connectors</AppDescription>
+  <AppSupport>IT SUPPORT</AppSupport>
+  <UserName>test</UserName>
+  <OwnerID>{7ee0aa93-4529-11f0-ad3e-000c29f83a26}</OwnerID>
+  <FileID>{85d5eb52-4529-11f0-ad3e-000c29f83a26}</FileID>
+  <QBType>QBFS</QBType>
+  <Style>Document</Style>
+  <AuthFlags>0xF</AuthFlags>
+<IsReadOnly>false</IsReadOnly>
+</QBWCXML>

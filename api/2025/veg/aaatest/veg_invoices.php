@@ -43,6 +43,7 @@
          $template = strtoupper($qbCustName) === strtoupper($flamingoproducelimited) ? 'FUK Invoice' : 'EUR Invoice';
          $itemtax = $custCountryId === 7 ? 'Z' : 'E';
 
+         // INSERT INTO qb_invoice (TxnID, Customer_FullName, ARAccount_FullName, TxnDate,  RefNumber, PONumber), 
          $insertQuickbooks = "INSERT INTO qb_invoice(TxnID, Customer_FullName, ARAccount_FullName, TxnDate, Template_FullName, RefNumber, PONumber, Terms_FullName, DueDate, ShipDate, ItemSalesTax_FullName, Currency_FullName) 
          VALUES('$txnID', '$qbCustName', '$arAcc', '$invoiceDate', '$template', '$invoiceNo', '$poNo', '', '$dueDate', '$shipDate', '$itemtax', '$currencyName');";
 
@@ -78,6 +79,7 @@
             $amount = round($invoiceLineRow[5],2);
             $taxName = 'Tax';
 
+            $custCategoryId = 0;
             $productQuery = "SELECT ProductId, ProductCode, ProductName, ProductCode2, ProductTypeId, CustomerId, NetPackWtKg, BoxCount, Price, ClientCategoryId FROM Product WHERE ProductId = $productId";
             $productStatement = $con_gen->prepare($productQuery);
             $productStatement->execute();
@@ -89,6 +91,8 @@
                $subitem=str_replace(" ","",substr($productRow[2], 0, 29))."".$productRow[7];
             }
 
+            $custCategoryName = '';
+            $flamingoitems='Mini';
             $custCategoryQuery = "SELECT CustomerCategoryName FROM CustomerCategory WHERE CustomerCategoryId = $custCategoryId";
             $custCategoryStatement = $con_gen->prepare($custCategoryQuery);
             $custCategoryStatement->execute();

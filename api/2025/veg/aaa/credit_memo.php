@@ -1,6 +1,6 @@
 ﻿<?php
    include 'access.php';
-   require_once '../../../../configs/2025/veg/aaatest/quickbooks.php';
+   require_once '../../../../configs/2025/veg/aaa/quickbooks.php';
 
    $timecreated=date("Y-m-d h:i:sa");
    if($_GET["action"] === 'syncVegCreditNotes'){
@@ -56,7 +56,7 @@
             $creditNotelastid = $con_quickbooks->lastInsertId();
             // $dbConnectionString = "$mysql_username:$mysql_password@$mysql_servername:$mysql_port/$mysql_dbname";
             // $creditNotequeue = new QuickBooks_WebConnector_Queue('mysqli://'. $dbConnectionString);
-            $creditNotequeue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170:3306/testvegaaa2025');
+            $creditNotequeue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170:3306/vegaaa2025');
             $creditNotequeue->enqueue(QUICKBOOKS_ADD_CREDITMEMO, $creditNotelastid, 903);
 
             $creditNoteLines = array();

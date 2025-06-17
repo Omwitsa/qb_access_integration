@@ -4,7 +4,7 @@
 
    $timecreated=date("Y-m-d h:i:sa");
    if($_GET["action"] === 'syncVegPayments'){
-      $custPaymentQuery = "SELECT CustomerPaymentId, CustomerId, PaymentDate, ForeignAmountPaid, BankId, Description FROM CustomerPayment WHERE PaymentDate  Between #5/19/2025# And #12/31/2026# AND (QBTransferStatus <> 1 OR QBTransferStatus IS NULL)  ORDER BY CustomerPaymentId";
+      $custPaymentQuery = "SELECT CustomerPaymentId, CustomerId, PaymentDate, ForeignAmountPaid, BankId, Description FROM CustomerPayment WHERE PaymentDate  Between #5/19/2025# And #12/31/2026#  ORDER BY CustomerPaymentId";
       $custPAymentStatement = $con_ho->prepare($custPaymentQuery);
       $custPAymentStatement->execute();
       $custPaymentResults=$custPAymentStatement->fetchAll();
@@ -15,9 +15,9 @@
          $paymentDate = $custPaymentRow[2];
          $amount = $custPaymentRow[3];
          $bankId = $custPaymentRow[4];
-         $refNo = $custPaymentRow[5];
+         $memo = $custPaymentRow[5];
 
-         $qbPaymentQuery = "SELECT TxnID FROM qb_receivepayment WHERE TxnID = '$txnID';";
+         $qbPaymentQuery = "SELECT RefNumber FROM qb_receivepayment WHERE RefNumber = '$paymentId';";
          $qbPaymentStatement = $con_quickbooks->prepare($qbPaymentQuery);
          $qbPaymentStatement->execute();
          $qbPaymentRows = $qbPaymentStatement->rowCount();
@@ -46,7 +46,7 @@
 
          if(!empty($qbCustName)){
             $insertQbPayments = "INSERT INTO qb_receivepayment (TxnID, TimeCreated, TimeModified, Customer_FullName, ARAccount_FullName, TxnDate, RefNumber, TotalAmount, Memo, DepositToAccount_FullName) 
-            VALUES('$txnID', NOW(), NOW(),'$qbCustName','$arAcc', '$paymentDate', '$refNo', $amount, '$refNo', '$accDepositedTo');";
+            VALUES('$txnID', NOW(), NOW(),'$qbCustName','$arAcc', '$paymentDate', '$paymentId', $amount, '$memo', '$accDepositedTo');";
             $insertQbPaymentStatement=$con_quickbooks->prepare($insertQbPayments);
             $insertQbPaymentResult=$insertQbPaymentStatement->execute();
 

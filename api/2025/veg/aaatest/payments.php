@@ -15,9 +15,9 @@
          $paymentDate = $custPaymentRow[2];
          $amount = $custPaymentRow[3];
          $bankId = $custPaymentRow[4];
-         $refNo = $custPaymentRow[5];
+         $memo = $custPaymentRow[5];
 
-         $qbPaymentQuery = "SELECT TxnID FROM qb_receivepayment WHERE TxnID = '$txnID';";
+         $qbPaymentQuery = "SELECT RefNumber FROM qb_receivepayment WHERE RefNumber = '$paymentId';";
          $qbPaymentStatement = $con_quickbooks->prepare($qbPaymentQuery);
          $qbPaymentStatement->execute();
          $qbPaymentRows = $qbPaymentStatement->rowCount();
@@ -46,7 +46,7 @@
 
          if(!empty($qbCustName)){
             $insertQbPayments = "INSERT INTO qb_receivepayment (TxnID, TimeCreated, TimeModified, Customer_FullName, ARAccount_FullName, TxnDate, RefNumber, TotalAmount, Memo, DepositToAccount_FullName) 
-            VALUES('$txnID', NOW(), NOW(),'$qbCustName','$arAcc', '$paymentDate', '$refNo', $amount, '$refNo', '$accDepositedTo');";
+            VALUES('$txnID', NOW(), NOW(),'$qbCustName','$arAcc', '$paymentDate', '$paymentId', $amount, '$memo', '$accDepositedTo');";
             $insertQbPaymentStatement=$con_quickbooks->prepare($insertQbPayments);
             $insertQbPaymentResult=$insertQbPaymentStatement->execute();
 

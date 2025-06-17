@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<QBWCXML>
+  <AppName>Veg FG 2025 Test</AppName>
+  <AppID>IDNTS_VEGFGTWO_2025</AppID>
+  <AppURL>http://192.168.1.122:88/VegQbIntegrator/configs/2025/veg/fgtest/mirror.php</AppURL>
+  <AppDescription>Veg FG 2025 Test Quickbooks Web Connectors</AppDescription>
+  <AppSupport>IT SUPPORT</AppSupport>
+  <UserName>test</UserName>
+  <OwnerID>{f8fb0b15-4514-11f0-ad3e-000c29f83a26}</OwnerID>
+  <FileID>{02570c03-4515-11f0-ad3e-000c29f83a26}</FileID>
+  <QBType>QBFS</QBType>
+  <Style>Document</Style>
+  <AuthFlags>0xF</AuthFlags>
+<IsReadOnly>false</IsReadOnly>
+</QBWCXML>
