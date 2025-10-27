@@ -4,7 +4,7 @@
 
    $timecreated=date("Y-m-d h:i:sa");
    if($_GET["action"] === 'syncVegCreditNotes'){
-      $creditNoteQuery = "SELECT CreditNoteId, CreditNoteNo, CreditNoteDate, CreditNoteValue, CustomerId, Notes FROM CreditNote WHERE CreditNoteDate Between #6/1/2025# And #12/31/2026#  ORDER BY CreditNoteId";
+      $creditNoteQuery = "SELECT CreditNoteId, CreditNoteNo, CreditNoteDate, CreditNoteValue, CustomerId, Notes FROM CreditNote WHERE CreditNoteDate Between #9/22/2025# And #12/31/2026#  ORDER BY CreditNoteId";
       $creditNoteStatement = $con_ho->prepare($creditNoteQuery);
       $creditNoteStatement->execute();
       $creditNoteResults=$creditNoteStatement->fetchAll();
@@ -17,16 +17,15 @@
          $amount = $creditNoteRow[3];
          $custId = $creditNoteRow[4];
 
-         $refNo = "";
          $claimHeaderQuery = "SELECT ClaimHeaderId, ReferenceNo, InvoiceHeaderId FROM ClaimHeader WHERE CreditNoteId = $creditNoteId";
          $claimHeaderStatement = $con_ho->prepare($claimHeaderQuery);
          $claimHeaderStatement->execute();
          $claimHeaderResults=$claimHeaderStatement->fetchAll();
          foreach($claimHeaderResults as $claimHeaderRow){
             $claimHeaderId = $claimHeaderRow[0];
-            $refNo = $claimHeaderRow[1];
          }
          
+         $refNo = $creditNoteNo;
          $qbIdQuery = "SELECT RefNumber FROM qb_creditmemo WHERE RefNumber = '$refNo';";
          $qbIdStatement = $con_quickbooks->prepare($qbIdQuery);
          $qbIdStatement->execute();
@@ -35,6 +34,7 @@
             continue;
          }
 
+         $qbCustName = "";
          $customerQuery = "SELECT CustomerName, CountryId, CustomerCode, CustomerFullName, CurrencyCode, QBCustomerNameAAA, FinalInvoiceType FROM Customer WHERE CustomerId = $custId";
          $customerStatement = $con_gen->prepare($customerQuery);
          $customerStatement->execute();
@@ -48,8 +48,8 @@
          
          $itemtax = $custCountryId === 7 ? 'Z' : 'E';
          if(!empty($qbCustName)){
-            $insertQbCreditNotes = "INSERT INTO qb_creditmemo(TxnID, TimeCreated, TimeModified, Customer_FullName, ARAccount_FullName, Template_FullName, TxnDate, RefNumber, DueDate, ShipDate, Subtotal, ItemSalesTax_FullName, TotalAmount, CreditRemaining, CustomerSalesTaxCode_FullName) 
-            VALUES('$txnID', NOW(), NOW(), '$qbCustName', '$arAcc', 'Custom Credit Memo', '$creditNoteDate', '$refNo', '$creditNoteDate', '$creditNoteDate', $amount, '$itemtax', $amount, $amount, '$taxName');";
+            $insertQbCreditNotes = "INSERT INTO qb_creditmemo(TxnID, TimeCreated, Customer_FullName, ARAccount_FullName, Template_FullName, TxnDate, RefNumber, DueDate, ShipDate, Subtotal, ItemSalesTax_FullName, TotalAmount, CreditRemaining, CustomerSalesTaxCode_FullName) 
+            VALUES('$txnID', NOW(), '$qbCustName', '$arAcc', 'Custom Credit Memo', '$creditNoteDate', '$refNo', '$creditNoteDate', '$creditNoteDate', $amount, '$itemtax', $amount, $amount, '$taxName');";
             $insertQbCreditNoteStatement=$con_quickbooks->prepare($insertQbCreditNotes);
             $insertQbCreditNoteResult=$insertQbCreditNoteStatement->execute();
 

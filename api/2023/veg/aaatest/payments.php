@@ -1,32 +1,28 @@
 ﻿<?php
    include 'access.php';
-   require_once '../../../../configs/2025/veg/fgtest/quickbooks.php';
+   require_once '../../../../VegaaaCofigs2023Test/quickbooks.php';
 
    $timecreated=date("Y-m-d h:i:sa");
-   if($_GET["action"] === 'syncVegPayments'){
-      $custPaymentQuery = "SELECT CustomerPaymentId, CustomerId, PaymentDate, IIf(IsNull([ForeignAmountPaid]),0,[ForeignAmountPaid])+IIf(IsNull([OtherAmount]),0,[OtherAmount]) +IIf(IsNull([RebateAmount]),0,[RebateAmount])  AS Amount, BankId, Description FROM CustomerPayment WHERE PaymentDate Between #5/19/2025# And #12/31/2026# ORDER BY CustomerPaymentId";
-
+   if($_GET["action"] === 'syncVegaaaPayments'){
+      $custPaymentQuery = "SELECT CustomerPaymentId, CustomerId, PaymentDate, ForeignAmountPaid, BankId, Description FROM CustomerPayment WHERE PaymentDate  Between #19/5/2025# And #31/12/2026# AND (QBTransferStatus <> 1 OR QBTransferStatus IS NULL) ORDER BY CustomerPaymentId";
       $custPAymentStatement = $con_ho->prepare($custPaymentQuery);
       $custPAymentStatement->execute();
       $custPaymentResults=$custPAymentStatement->fetchAll();
       foreach($custPaymentResults as $custPaymentRow){
-         $paymentId = $custPaymentRow[0];
-         $txnID = $paymentId;
+         $txnID = $custPaymentRow[0];
          $custId = $custPaymentRow[1];
          $paymentDate = $custPaymentRow[2];
          $amount = $custPaymentRow[3];
-         $bankId = $custPaymentRow[4] ? $custPaymentRow[4] : 0;
-         $memo = $custPaymentRow[5];
+         $bankId = $custPaymentRow[4];
 
-         $qbPaymentQuery = "SELECT RefNumber FROM qb_receivepayment WHERE RefNumber = '$paymentId';";
+         $qbPaymentQuery = "SELECT TxnID FROM qb_receivepayment WHERE TxnID = '$txnID';";
          $qbPaymentStatement = $con_quickbooks->prepare($qbPaymentQuery);
          $qbPaymentStatement->execute();
          $qbPaymentRows = $qbPaymentStatement->rowCount();
          if($qbPaymentRows > 0){
             continue;
          }
-
-         $accDepositedTo = "";
+         
          $bankQuery = "SELECT QBBankName FROM Bank WHERE BankId = $bankId";
          $bankStatement = $con_ho->prepare($bankQuery);
          $bankStatement->execute();
@@ -34,9 +30,8 @@
          foreach($bankResults as $bankRow){
             $accDepositedTo = $bankRow[0];
          }
-         
-         $qbCustName = "";
-         $customerQuery = "SELECT CustomerName, CountryId, CustomerCode, CustomerFullName, CurrencyCode, QBCustomerNameFG, FinalInvoiceType FROM Customer WHERE CustomerId = $custId";
+
+         $customerQuery = "SELECT CustomerName, CountryId, CustomerCode, CustomerFullName, CurrencyCode, QBCustomerNameAAA, FinalInvoiceType FROM Customer WHERE CustomerId = $custId";
          $customerStatement = $con_gen->prepare($customerQuery);
          $customerStatement->execute();
          $customerResults=$customerStatement->fetchAll();
@@ -46,18 +41,15 @@
             $arAcc = "Accounts Receivable - $currency"; 
          }
 
-        
-
          if(!empty($qbCustName)){
-            $insertQbPayments = "INSERT INTO qb_receivepayment (TxnID, TimeCreated, Customer_FullName, ARAccount_FullName, TxnDate, RefNumber, TotalAmount, Memo, DepositToAccount_FullName) 
-            VALUES('$txnID', NOW(),'$qbCustName','$arAcc', '$paymentDate', '$paymentId', $amount, '$memo', '$accDepositedTo');";
+            $insertQbPayments = "INSERT INTO qb_receivepayment (TxnID, TimeCreated, TimeModified, Customer_FullName, ARAccount_FullName, TxnDate, TotalAmount, DepositToAccount_FullName) 
+            VALUES('$txnID', NOW(), NOW(),'$qbCustName','$arAcc', '$paymentDate', $amount, '$accDepositedTo');";
             $insertQbPaymentStatement=$con_quickbooks->prepare($insertQbPayments);
             $insertQbPaymentResult=$insertQbPaymentStatement->execute();
 
             $paymentlastid = $con_quickbooks->lastInsertId();
-            // $dbConnectionString = "$mysql_username:$mysql_password@$mysql_servername:$mysql_port/$mysql_dbname";
-            // $paymentqueue = new QuickBooks_WebConnector_Queue('mysqli://'. $dbConnectionString);
-            $paymentqueue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170:3306/testvegfg2025');
+            $dbConnectionString = "$mysql_username:$mysql_password@$mysql_servername:$mysql_port/$mysql_dbname";
+            $paymentqueue = new QuickBooks_WebConnector_Queue('mysqli://'. $dbConnectionString);
             $paymentqueue->enqueue(QUICKBOOKS_ADD_RECEIVEPAYMENT, $paymentlastid, 903);
 
             $paymentLines = array();
@@ -70,7 +62,6 @@
                $invoiceHeaderId = $custPayLineRow[0];
                $lineAmount = $custPayLineRow[1];
 
-               $invoiceNo = "";
                $invoiceHeaderQuery = "SELECT InvoiceNo FROM  InvoiceHeader WHERE InvoiceHeaderId = $invoiceHeaderId";
                $invoiceHeaderStatement = $con_ho->prepare($invoiceHeaderQuery);
                $invoiceHeaderStatement->execute();
@@ -79,7 +70,6 @@
                   $invoiceNo = $invoiceHeaderRow[0];
                }
 
-               $toTxnID = "";
                $qbInvoiceQuery = "SELECT TxnID FROM qb_invoice WHERE RefNumber = '$invoiceNo';";
                $qbInvoiceStatement = $con_quickbooks->prepare($qbInvoiceQuery);
                $qbInvoiceStatement->execute();
@@ -97,10 +87,6 @@
                $inserPaymentStatement=$con_quickbooks->prepare($inserPaymentQuery);
                $inserPaymentStatement->execute();
             }
-
-            $paymentQbStatusUpdate="UPDATE CustomerPayment SET QBTransferStatus = 1 WHERE CustomerPaymentId = $paymentId;";
-            $paymentQbStatusUpdateStatement= $con_ho->prepare($paymentQbStatusUpdate);
-            $paymentQbStatusUpdateStatement->execute();
          }
       }
 

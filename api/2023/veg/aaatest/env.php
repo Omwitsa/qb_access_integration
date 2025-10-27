@@ -3,6 +3,5 @@
   $mysql_port = "3306";
   $mysql_username = "IT_ADMIN";
   $mysql_password = "sysadmin2018";
-  $mysql_dbname = "rosesaaa2025";
+  $mysql_dbname = "testvegaaa2023";
 ?>
-

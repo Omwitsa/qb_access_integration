@@ -6,8 +6,8 @@
   <AppDescription>Veg AAA 2025 Test Quickbooks Web Connectors</AppDescription>
   <AppSupport>IT SUPPORT</AppSupport>
   <UserName>test</UserName>
-  <OwnerID>{87381be3-42bb-11f0-b282-000c29f83a26}</OwnerID>
-  <FileID>{93afe3a7-42bb-11f0-b282-000c29f83a26}</FileID>
+  <OwnerID>{311d79e2-79bf-11f0-9098-000c29f83a26}</OwnerID>
+  <FileID>{40c800ff-79bf-11f0-9098-000c29f83a26}</FileID>
   <QBType>QBFS</QBType>
   <Style>Document</Style>
   <AuthFlags>0xF</AuthFlags>

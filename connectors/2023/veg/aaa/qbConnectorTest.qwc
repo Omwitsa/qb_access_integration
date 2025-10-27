@@ -2,7 +2,7 @@
 <QBWCXML>
   <AppName>Veg AAA 2023 Test</AppName>
   <AppID>IDNTS_FSTWO_2023</AppID>
-  <AppURL>http://192.168.1.170:88/VegQbIntegrator/VegaaaCofigs2023Test/mirror.php</AppURL>
+  <AppURL>http://192.168.1.122:88/VegQbIntegrator/configs/2023/veg/aaatest/mirror.php</AppURL>
   <AppDescription>Invoice Quickbooks Web Connectors Test</AppDescription>
   <AppSupport>IT SUPPORT</AppSupport>
   <UserName>test</UserName>

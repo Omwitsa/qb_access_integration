@@ -4,7 +4,8 @@
 
    $timecreated=date("Y-m-d h:i:sa");
    if($_GET["action"] === 'syncRmPayments'){
-      $custPaymentQuery = "SELECT CustomerPaymentId, ClientId, PaymentDate, ForeignAmountPaid, BankId, Description FROM CustomerPayment WHERE PaymentDate Between #6/1/2025# AND #12/31/2026# ORDER BY CustomerPaymentId";
+      $custPaymentQuery = "SELECT CustomerPaymentId, ClientId, PaymentDate, IIf(IsNull([ForeignAmountPaid]),0,[ForeignAmountPaid])+IIf(IsNull([OtherAmount]),0,[OtherAmount]) +IIf(IsNull([RebateAmount]),0,[RebateAmount])  AS Amount, BankId, Description FROM CustomerPayment WHERE PaymentDate Between #6/1/2025# And #12/31/2026# ORDER BY CustomerPaymentId";
+
       $custPAymentStatement = $con_ho->prepare($custPaymentQuery);
       $custPAymentStatement->execute();
       $custPaymentResults=$custPAymentStatement->fetchAll();
@@ -14,7 +15,7 @@
          $custId = $custPaymentRow[1];
          $paymentDate = $custPaymentRow[2];
          $amount = $custPaymentRow[3];
-         $bankId = $custPaymentRow[4];
+         $bankId = $custPaymentRow[4] ? $custPaymentRow[4] : 0;
          $memo = $custPaymentRow[5];
 
          $qbPaymentQuery = "SELECT RefNumber FROM qb_receivepayment WHERE RefNumber = '$paymentId';";
@@ -26,7 +27,7 @@
          }
 
          $accDepositedTo = "";
-         $bankQuery = "SELECT BankName FROM Bank WHERE BankId = $bankId";
+         $bankQuery = "SELECT QBBankName FROM Bank WHERE BankId = $bankId";
          $bankStatement = $con_ho->prepare($bankQuery);
          $bankStatement->execute();
          $bankResults=$bankStatement->fetchAll();
@@ -34,6 +35,7 @@
             $accDepositedTo = $bankRow[0];
          }
         
+         $qbCustName = "";
          $customerQuery = "SELECT ClientName, Country, ClientCode, CurrencyCode, QBCustomerNameAAA FROM Client WHERE ExporterId = 24 AND ClientId = $custId";
          $customerStatement = $con_gen->prepare($customerQuery);
          $customerStatement->execute();
@@ -45,8 +47,8 @@
          }
 
          if(!empty($qbCustName)){
-            $insertQbPayments = "INSERT INTO qb_receivepayment (TxnID, TimeCreated, TimeModified, Customer_FullName, ARAccount_FullName, TxnDate, RefNumber, TotalAmount, Memo, DepositToAccount_FullName) 
-            VALUES('$txnID', NOW(), NOW(),'$qbCustName','$arAcc', '$paymentDate', '$paymentId', $amount, '$memo', '$accDepositedTo');";
+            $insertQbPayments = "INSERT INTO qb_receivepayment (TxnID, TimeCreated, Customer_FullName, ARAccount_FullName, TxnDate, RefNumber, TotalAmount, Memo, DepositToAccount_FullName) 
+            VALUES('$txnID', NOW(),'$qbCustName','$arAcc', '$paymentDate', '$paymentId', $amount, '$memo', '$accDepositedTo');";
             $insertQbPaymentStatement=$con_quickbooks->prepare($insertQbPayments);
             $insertQbPaymentResult=$insertQbPaymentStatement->execute();
 
