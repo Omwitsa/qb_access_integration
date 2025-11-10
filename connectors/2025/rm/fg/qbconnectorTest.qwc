@@ -6,8 +6,8 @@
   <AppDescription>RM FG 2025 TEST Quickbooks Web Connectors 2025</AppDescription>
   <AppSupport>http://192.168.1.170:88/info.php</AppSupport>
   <UserName>test</UserName>
-  <OwnerID>{cbafc306-a061-11f0-b7a5-000c293c2480}</OwnerID>
-  <FileID>{de08cc6c-a061-11f0-b7a5-000c293c2480}</FileID>
+  <OwnerID>{a748ebf6-b335-11f0-a432-000c293c2480}</OwnerID>
+  <FileID>{b0cf059f-b335-11f0-a432-000c293c2480}</FileID>
   <QBType>QBFS</QBType>
   <Style>Document</Style>
   <AuthFlags>0xF</AuthFlags>
