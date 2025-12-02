@@ -1,19 +1,14 @@
 ﻿<?php
    include 'access.php';
    include 'functions.php';
-   include 'customers.php';
-   include 'items.php';
-   require_once '../../../../configs/2025/veg/fgtest/quickbooks.php';
+   require_once '../../../../configs/2025/veg/aaatest/quickbooks.php';
 
    $timecreated=date("Y-m-d h:i:sa");
    if($_GET["action"] === 'synchVegInvoice'){
-      
-
       // $invoiceNo = trim($_GET["invoiceNo"]);
-      $flamingoproducelimited='2BB - Flamingo Produce UK Ltd';
-      
-      // $invoiceHeaderQuery = "SELECT InvoiceHeaderId, CustomerId, InvoiceDate, InvoiceNo, ShippingTerms, FlightDate, QBInvoiceNo, Ref FROM InvoiceHeader WHERE Finalized = Yes AND ExporterId = 2 AND InvoiceDate Between #01/01/2025# And #12/31/2026# ORDER BY InvoiceHeaderId";
-      $invoiceHeaderQuery = "SELECT InvoiceHeaderId, CustomerId, InvoiceDate, InvoiceNo, ShippingTerms, FlightDate, QBInvoiceNo, Ref FROM InvoiceHeader WHERE Finalized = Yes AND ExporterId = 2 AND InvoiceHeaderId = 152481 AND InvoiceDate Between #01/01/2025# And #12/31/2026# ORDER BY InvoiceHeaderId";
+      $flamingoproducelimited='BB - Flamingo Produce UK Ltd';
+      // $invoiceHeaderQuery = "SELECT InvoiceHeaderId, CustomerId, InvoiceDate, InvoiceNo, ShippingTerms, FlightDate, QBInvoiceNo, Ref FROM InvoiceHeader WHERE Finalized = Yes AND ExporterId = 1 AND InvoiceDate Between #01/01/2025# And #12/31/2026# ORDER BY InvoiceHeaderId";
+      $invoiceHeaderQuery = "SELECT InvoiceHeaderId, CustomerId, InvoiceDate, InvoiceNo, ShippingTerms, FlightDate, QBInvoiceNo, Ref FROM InvoiceHeader WHERE Finalized = Yes AND ExporterId = 1 AND InvoiceHeaderId = 153240 AND InvoiceDate Between #01/01/2025# And #12/31/2026# ORDER BY InvoiceHeaderId";
       $invoiceHeaderStatement = $con_ho->prepare($invoiceHeaderQuery);
       $invoiceHeaderStatement->execute();
       $invoiceHeaderResults=$invoiceHeaderStatement->fetchAll();
@@ -36,20 +31,15 @@
          ));
          $qbInvoiceRows = $qbInvoiceStatement->rowCount();
          if($qbInvoiceRows > 0){
-            $updateInvoiceQuery="UPDATE InvoiceHeader SET QBTransferStatus=1 WHERE InvoiceHeaderId = :InvoiceHeaderId";
+            $updateInvoiceQuery="UPDATE InvoiceHeader SET QBTransferStatus=1 WHERE InvoiceHeaderId=$invoiceHeaderId";
             $updateInvoiceStatement=$con_ho->prepare($updateInvoiceQuery);
-            $updateInvoiceStatement->execute(array(
-               ':InvoiceHeaderId'=> $invoiceHeaderId
-            ));
+            $updateInvoiceStatement->execute();
             continue;
          }
 
-         $customerCode = "";
-         $customerQuery = "SELECT CustomerName, CountryId, CustomerCode, CustomerFullName, CurrencyCode, QBCustomerNameFG, FinalInvoiceType FROM Customer WHERE CustomerId = :customerId";
+         $customerQuery = "SELECT CustomerName, CountryId, CustomerCode, CustomerFullName, CurrencyCode, QBCustomerNameFG, FinalInvoiceType FROM Customer WHERE CustomerId = $invoiceCustId";
          $customerStatement = $con_gen->prepare($customerQuery);
-         $customerStatement->execute(array(
-            ':customerId'=> $invoiceCustId
-         ));
+         $customerStatement->execute();
          $customerResults=$customerStatement->fetchAll();
          foreach($customerResults as $customerRow){
             $custCountryId = $customerRow[1];
@@ -68,8 +58,8 @@
             // $template = strtoupper($qbCustName) === strtoupper($flamingoproducelimited) ? 'FUK Invoice' : 'EUR Invoice';
             // $itemtax = $custCountryId === 7 ? 'Z' : 'E';
 
-            $insertQuickbooks = 'INSERT INTO qb_invoice(TxnID, TimeCreated, Customer_FullName, ARAccount_FullName, TxnDate, Template_FullName, RefNumber, PONumber, ShipDate, ItemSalesTax_FullName, Currency_FullName) 
-            VALUES(:txnID, :timeCreated, :qbCustName, :arAcc, :invoiceDate, :template_FullName, :invoiceNo, :qBInvoiceNo, :shipDate, :itemSalesTax_FullName, :currencyName);';
+            $insertQuickbooks = "INSERT INTO qb_invoice(TxnID, TimeCreated, Customer_FullName, ARAccount_FullName, TxnDate, Template_FullName, RefNumber, PONumber, ShipDate, ItemSalesTax_FullName, Currency_FullName) 
+            VALUES(:txnID, :timeCreated, :qbCustName, :arAcc, :invoiceDate, :template_FullName, :invoiceNo, :qBInvoiceNo, :shipDate, :itemSalesTax_FullName, :currencyName);";
             $insertQbInvoiceStatement=$con_quickbooks->prepare($insertQuickbooks);
             $insertQbInvoiceResult=$insertQbInvoiceStatement->execute(array(
                ':txnID'=> $txnID,
@@ -88,7 +78,7 @@
             $invoicelastid = $con_quickbooks->lastInsertId();
             // $dbConnectionString = "$mysql_username:$mysql_password@$mysql_servername:$mysql_port/$mysql_dbname";
             // $invoicequeue = new QuickBooks_WebConnector_Queue('mysqli://'. $dbConnectionString);
-            $invoicequeue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170:3306/testvegfg2025');
+            $invoicequeue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170:3306/testvegaaa2025');
             $invoicequeue->enqueue(QUICKBOOKS_ADD_INVOICE, $invoicelastid, 903);
 
             $invoiceLines = array();
@@ -136,37 +126,34 @@
 
                   $subitem = str_replace(" ", "", $descrip);
                }
-               
-               $productTypeName = "";
+
+               $custCategoryQuery = "SELECT CustomerCategoryName FROM CustomerCategory WHERE CustomerCategoryId = :custCategoryId";
+               $custCategoryStatement = $con_gen->prepare($custCategoryQuery);
+               $custCategoryStatement->execute(array(
+                  ':custCategoryId' => $custCategoryId
+                 ));
+               $custCategoryResults=$custCategoryStatement->fetchAll();
+               foreach($custCategoryResults as $custCategoryRow){
+                  $custCategoryName = $custCategoryRow[0];
+                  $flamingoitems='Mini'.'-'.$custCategoryName;
+                  $itemfullname = $flamingoitems.":".$subitem;
+               }
+
                $productTypeQuery = "SELECT ProductTypeName FROM ProductType WHERE ProductTypeId = $productTypeId";
                $productTypeStatement = $con_gen->prepare($productTypeQuery);
                $productTypeStatement->execute();
                $productTypeResults=$productTypeStatement->fetchAll();
                foreach($productTypeResults as $productTypeRow){
                   $productTypeName = $productTypeRow[0];
-                  $flamingoitems = substr($customerCode, 0, 31)." ".$productTypeName;
-                  $flamingoitems = strlen($productTypeName) < 1 ? substr($customerCode, 0, 31) : $flamingoitems;
-                  $parentfullName = substr($customerFullName, 0, 31).":".$flamingoitems; 
-                  $itemfullname = $parentfullName.":".$subitem;
-               }
-
-               if($productCustomerId == 0){
-                  $custCategoryQuery = "SELECT CustomerCategoryName FROM CustomerCategory WHERE CustomerCategoryId = :custCategoryId";
-                  $custCategoryStatement = $con_gen->prepare($custCategoryQuery);
-                  $custCategoryStatement->execute(array(
-                     ':custCategoryId' => $custCategoryId
-                     ));
-                  $custCategoryResults=$custCategoryStatement->fetchAll();
-                  foreach($custCategoryResults as $custCategoryRow){
-                     $custCategoryName = $custCategoryRow[0];
-                     $flamingoitems='Mini'.'-'.$custCategoryName;
-                     $itemfullname = $flamingoitems.":".$subitem;
+                  if($productCustomerId != 0){
+                     $flamingoitems = substr($customerCode, 0, 31)." ".$productTypeName;
+                     $flamingoitems = strlen($productTypeName) < 1 ? substr($customerCode, 0, 31) : $flamingoitems;
+                     $itemfullname=substr($customerFullName, 0, 31).":".$flamingoitems.":".$subitem;
                   }
                }
                
-               if($labels != null){
-                  $itemfullname = $itemfullname." ".$labels;
-               }
+               // $itemfullname = $flamingoitems.":".$subitem." ".$labels;
+               $itemfullname = $labels == null ? $itemfullname : $itemfullname." ".$labels;
                $itemfullname = strtoupper(substr($customerCode, 0, 31)) == 'AL' ? 'Flamingo Produce Ltd'.":".$flamingoitems.":".$productCode : $itemfullname;
                $lineWeight = $netweightkg * $boxCount * $quantity;
                $other1 = $lineWeight.'Kgs net'; 
