@@ -28,6 +28,10 @@
       }
 
       $subitem = str_replace(" ", "", $descrip);
+      if (strpos($subitem, ":")) {
+         continue;
+      }
+
       $customerCode = "";
       $customerStatement = $con_gen->prepare('SELECT CustomerName, CustomerCode, CustomerFullName, QBCustomerNameFG	FROM Customer WHERE CustomerId = :CustomerId');
       $customerStatement->execute(array(
@@ -40,8 +44,19 @@
          if(strtoupper($customerCode) == 'TS' OR strtoupper($customerCode) == 'JS' OR strtoupper($customerCode) == 'MS'   OR strtoupper($customerCode) == 'MO' 
          OR strtoupper($customerCode) == 'MKT' OR strtoupper($customerCode) == 'BK' OR strtoupper($customerCode) == 'WR' OR strtoupper($customerCode) == 'AL'){
             $labels=' SNN';
-            $sublevel=1;
          }
+      }
+
+      $custCategoryQuery = "SELECT CustomerCategoryName FROM CustomerCategory WHERE CustomerCategoryId = :custCategoryId";
+      $custCategoryStatement = $con_gen->prepare($custCategoryQuery);
+      $custCategoryStatement->execute(array(
+         ':custCategoryId' => $customerId
+         ));
+      $custCategoryResults=$custCategoryStatement->fetchAll();
+      foreach($custCategoryResults as $custCategoryRow){
+         $custCategoryName = $custCategoryRow[0];
+         $flamingoitems = 'Mini'.'-'.$custCategoryName;
+         $itemfullname = $flamingoitems.":".$subitem;
       }
 
       $productTypeName = "";
@@ -55,31 +70,26 @@
          $productTypeName = $productTypeRow[0];
          $flamingoitems = substr($customerCode, 0, 31)." ".$productTypeName;
          $flamingoitems = strlen($productTypeName) < 1 ? substr($customerCode, 0, 31) : $flamingoitems;
-         if(isset($labels)){ 
-            $parentfullName = substr($customerFullName, 0, 31).":".$flamingoitems;
+         if(isset($customerFullName)){
+            // $parentfullName = substr($customerFullName, 0, 31);
+            if(isset($labels)){
+               $parentfullName = substr($customerFullName, 0, 31).":".$flamingoitems;
+            }
          }
           
-         $itemfullname = substr($customerFullName, 0, 31).":".$flamingoitems.":".$subitem;
-      }
-      
-      if($customerId == 0){
-         $custCategoryQuery = "SELECT CustomerCategoryName FROM CustomerCategory WHERE CustomerCategoryId = :custCategoryId";
-         $custCategoryStatement = $con_gen->prepare($custCategoryQuery);
-         $custCategoryStatement->execute(array(
-            ':custCategoryId' => $customerId
-            ));
-         $custCategoryResults=$custCategoryStatement->fetchAll();
-         foreach($custCategoryResults as $custCategoryRow){
-            $custCategoryName = $custCategoryRow[0];
-            $flamingoitems='Mini'.'-'.$custCategoryName;
-            $itemfullname = $flamingoitems.":".$subitem;
-         }
+         $itemfullname = isset($parentfullName) ? $parentfullName.":".$subitem : $subitem;
       }
 
-      if($labels != null){
-         $itemfullname = $itemfullname." ".$labels;
-      }
+      $parentStatement = $con_quickbooks->prepare('SELECT * FROM qb_itemnoninventory WHERE Parent_FullName = :Parent_FullName');
+      $parentStatement->execute(array(
+      ':Parent_FullName' => substr($customerFullName, 0, 31)
+      ));
+      $parentCount = $parentStatement->rowCount();
+      $sublevel = $parentCount > 0 ? 1 : $sublevel;
+      
       $itemfullname = strtoupper(substr($customerCode, 0, 31)) == 'AL' ? 'Flamingo Produce Ltd'.":".$flamingoitems.":".$productCode : $itemfullname;
+      $itemfullname = $itemfullname.''.$labels;
+
       $qbItemStatement = $con_quickbooks->prepare('SELECT COUNT(*) FROM qb_itemnoninventory WHERE FullName=:FullName');
       $qbItemStatement->execute(array(
          ':FullName' => $itemfullname

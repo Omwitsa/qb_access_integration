@@ -7,8 +7,6 @@
 
    $timecreated=date("Y-m-d h:i:sa");
    if($_GET["action"] === 'synchVegInvoice'){
-      
-
       // $invoiceNo = trim($_GET["invoiceNo"]);
       $flamingoproducelimited='2BB - Flamingo Produce UK Ltd';
       
@@ -136,38 +134,42 @@
 
                   $subitem = str_replace(" ", "", $descrip);
                }
+
+               $custCategoryQuery = "SELECT CustomerCategoryName FROM CustomerCategory WHERE CustomerCategoryId = :custCategoryId";
+               $custCategoryStatement = $con_gen->prepare($custCategoryQuery);
+               $custCategoryStatement->execute(array(
+                  ':custCategoryId' => $custCategoryId
+                  ));
+               $custCategoryResults=$custCategoryStatement->fetchAll();
+               foreach($custCategoryResults as $custCategoryRow){
+                  $custCategoryName = $custCategoryRow[0];
+                  $flamingoitems = 'Mini'.'-'.$custCategoryName;
+                  $itemfullname = $flamingoitems.":".$subitem;
+               }
                
                $productTypeName = "";
-               $productTypeQuery = "SELECT ProductTypeName FROM ProductType WHERE ProductTypeId = $productTypeId";
+               $productTypeQuery = "SELECT ProductTypeName FROM ProductType WHERE ProductTypeId = :productTypeId";
                $productTypeStatement = $con_gen->prepare($productTypeQuery);
-               $productTypeStatement->execute();
+               $productTypeStatement->execute(array(
+                  ':productTypeId' => $productTypeId
+                  ));
                $productTypeResults=$productTypeStatement->fetchAll();
                foreach($productTypeResults as $productTypeRow){
                   $productTypeName = $productTypeRow[0];
                   $flamingoitems = substr($customerCode, 0, 31)." ".$productTypeName;
                   $flamingoitems = strlen($productTypeName) < 1 ? substr($customerCode, 0, 31) : $flamingoitems;
-                  $parentfullName = substr($customerFullName, 0, 31).":".$flamingoitems; 
-                  $itemfullname = $parentfullName.":".$subitem;
+                  if(isset($customerFullName)){
+                     // $parentfullName = substr($customerFullName, 0, 31);
+                     if(isset($labels)){
+                        $parentfullName = substr($customerFullName, 0, 31).":".$flamingoitems;
+                     }
+                  }
+                  
+                  $itemfullname = isset($parentfullName) ? $parentfullName.":".$subitem : $subitem;
                }
 
-               if($productCustomerId == 0){
-                  $custCategoryQuery = "SELECT CustomerCategoryName FROM CustomerCategory WHERE CustomerCategoryId = :custCategoryId";
-                  $custCategoryStatement = $con_gen->prepare($custCategoryQuery);
-                  $custCategoryStatement->execute(array(
-                     ':custCategoryId' => $custCategoryId
-                     ));
-                  $custCategoryResults=$custCategoryStatement->fetchAll();
-                  foreach($custCategoryResults as $custCategoryRow){
-                     $custCategoryName = $custCategoryRow[0];
-                     $flamingoitems='Mini'.'-'.$custCategoryName;
-                     $itemfullname = $flamingoitems.":".$subitem;
-                  }
-               }
-               
-               if($labels != null){
-                  $itemfullname = $itemfullname." ".$labels;
-               }
                $itemfullname = strtoupper(substr($customerCode, 0, 31)) == 'AL' ? 'Flamingo Produce Ltd'.":".$flamingoitems.":".$productCode : $itemfullname;
+               $itemfullname = $itemfullname.''.$labels;
                $lineWeight = $netweightkg * $boxCount * $quantity;
                $other1 = $lineWeight.'Kgs net'; 
                array_push($invoiceLines, "('$txnID', '$itemfullname', '$subitem', '$quantity', '$rate', '$amount', '$taxName', '$other1')");
