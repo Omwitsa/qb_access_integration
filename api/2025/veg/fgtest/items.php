@@ -3,8 +3,7 @@
    require_once '../../../../configs/2025/veg/fgtest/quickbooks.php';
 
    $timecreated=date("Y-m-d h:i:sa");
-   // $productQuery = "SELECT ProductId, ProductCode, ProductName, ProductCode2, ProductTypeId, CustomerId, NetPackWtKg, BoxCount, Price, ClientCategoryId	FROM Product ORDER BY ProductId ASC";
-   $productQuery = "SELECT ProductId, ProductCode, ProductName, ProductCode2, ProductTypeId, CustomerId, NetPackWtKg, BoxCount, Price, ClientCategoryId FROM Product WHERE ProductId = 3677;";
+   $productQuery = "SELECT ProductId, ProductCode, ProductName, ProductCode2, ProductTypeId, CustomerId, NetPackWtKg, BoxCount, Price, ClientCategoryId	FROM Product ORDER BY ProductId ASC";
    $productStatement = $con_gen->prepare($productQuery);
    $productStatement->execute();
    $productResults=$productStatement->fetchAll();

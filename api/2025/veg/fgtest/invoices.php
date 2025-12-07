@@ -10,8 +10,8 @@
       // $invoiceNo = trim($_GET["invoiceNo"]);
       $flamingoproducelimited='2BB - Flamingo Produce UK Ltd';
       
-      // $invoiceHeaderQuery = "SELECT InvoiceHeaderId, CustomerId, InvoiceDate, InvoiceNo, ShippingTerms, FlightDate, QBInvoiceNo, Ref FROM InvoiceHeader WHERE Finalized = Yes AND ExporterId = 2 AND InvoiceDate Between #01/01/2025# And #12/31/2026# ORDER BY InvoiceHeaderId";
-      $invoiceHeaderQuery = "SELECT InvoiceHeaderId, CustomerId, InvoiceDate, InvoiceNo, ShippingTerms, FlightDate, QBInvoiceNo, Ref FROM InvoiceHeader WHERE Finalized = Yes AND ExporterId = 2 AND InvoiceHeaderId = 152481 AND InvoiceDate Between #01/01/2025# And #12/31/2026# ORDER BY InvoiceHeaderId";
+      $invoiceHeaderQuery = "SELECT InvoiceHeaderId, CustomerId, InvoiceDate, InvoiceNo, ShippingTerms, FlightDate, QBInvoiceNo, Ref FROM InvoiceHeader WHERE Finalized = Yes AND ExporterId = 2 AND InvoiceDate Between #01/01/2025# And #12/31/2026# ORDER BY InvoiceHeaderId";
+      // $invoiceHeaderQuery = "SELECT InvoiceHeaderId, CustomerId, InvoiceDate, InvoiceNo, ShippingTerms, FlightDate, QBInvoiceNo, Ref FROM InvoiceHeader WHERE Finalized = Yes AND ExporterId = 2 AND InvoiceHeaderId = 152481 AND InvoiceDate Between #01/01/2025# And #12/31/2026# ORDER BY InvoiceHeaderId";
       $invoiceHeaderStatement = $con_ho->prepare($invoiceHeaderQuery);
       $invoiceHeaderStatement->execute();
       $invoiceHeaderResults=$invoiceHeaderStatement->fetchAll();
@@ -133,43 +133,45 @@
                   }
 
                   $subitem = str_replace(" ", "", $descrip);
-               }
 
-               $custCategoryQuery = "SELECT CustomerCategoryName FROM CustomerCategory WHERE CustomerCategoryId = :custCategoryId";
-               $custCategoryStatement = $con_gen->prepare($custCategoryQuery);
-               $custCategoryStatement->execute(array(
-                  ':custCategoryId' => $custCategoryId
-                  ));
-               $custCategoryResults=$custCategoryStatement->fetchAll();
-               foreach($custCategoryResults as $custCategoryRow){
-                  $custCategoryName = $custCategoryRow[0];
-                  $flamingoitems = 'Mini'.'-'.$custCategoryName;
-                  $itemfullname = $flamingoitems.":".$subitem;
-               }
-               
-               $productTypeName = "";
-               $productTypeQuery = "SELECT ProductTypeName FROM ProductType WHERE ProductTypeId = :productTypeId";
-               $productTypeStatement = $con_gen->prepare($productTypeQuery);
-               $productTypeStatement->execute(array(
-                  ':productTypeId' => $productTypeId
-                  ));
-               $productTypeResults=$productTypeStatement->fetchAll();
-               foreach($productTypeResults as $productTypeRow){
-                  $productTypeName = $productTypeRow[0];
-                  $flamingoitems = substr($customerCode, 0, 31)." ".$productTypeName;
-                  $flamingoitems = strlen($productTypeName) < 1 ? substr($customerCode, 0, 31) : $flamingoitems;
-                  if(isset($customerFullName)){
-                     // $parentfullName = substr($customerFullName, 0, 31);
-                     if(isset($labels)){
-                        $parentfullName = substr($customerFullName, 0, 31).":".$flamingoitems;
+                  if($productCustomerId == 0) {
+                     $custCategoryQuery = "SELECT CustomerCategoryName FROM CustomerCategory WHERE CustomerCategoryId = :custCategoryId";
+                     $custCategoryStatement = $con_gen->prepare($custCategoryQuery);
+                     $custCategoryStatement->execute(array(
+                        ':custCategoryId' => $custCategoryId
+                        ));
+                     $custCategoryResults=$custCategoryStatement->fetchAll();
+                     foreach($custCategoryResults as $custCategoryRow){
+                        $custCategoryName = $custCategoryRow[0];
+                        if(strlen($custCategoryName) > 0){
+                           $flamingoitems = 'Mini'.'-'.$custCategoryName;
+                           $itemfullname = $flamingoitems.":".$subitem;
+                        }
                      }
                   }
-                  
-                  $itemfullname = isset($parentfullName) ? $parentfullName.":".$subitem : $subitem;
-               }
+                  else{
+                     $productTypeName = "";
+                     $productTypeQuery = "SELECT ProductTypeName FROM ProductType WHERE ProductTypeId = :productTypeId";
+                     $productTypeStatement = $con_gen->prepare($productTypeQuery);
+                     $productTypeStatement->execute(array(
+                        ':productTypeId' => $productTypeId
+                        ));
+                     $productTypeResults=$productTypeStatement->fetchAll();
+                     foreach($productTypeResults as $productTypeRow){
+                        $productTypeName = $productTypeRow[0];
+                        $flamingoitems = substr($customerCode, 0, 31)." ".$productTypeName;
+                        $flamingoitems = strlen($productTypeName) < 1 ? substr($customerCode, 0, 31) : $flamingoitems;
+                        $itemfullname = substr($customerFullName, 0, 31).":".$flamingoitems.":".$subitem;
 
-               $itemfullname = strtoupper(substr($customerCode, 0, 31)) == 'AL' ? 'Flamingo Produce Ltd'.":".$flamingoitems.":".$productCode : $itemfullname;
-               $itemfullname = $itemfullname.''.$labels;
+                        if(strtoupper(substr($customerCode, 0, 31)) == 'AL'){
+                           $itemfullname = 'Flamingo Produce Ltd'.":".$flamingoitems.":".$productCode.$label;
+                        }
+
+                       
+                     }
+                  }
+               }
+               
                $lineWeight = $netweightkg * $boxCount * $quantity;
                $other1 = $lineWeight.'Kgs net'; 
                array_push($invoiceLines, "('$txnID', '$itemfullname', '$subitem', '$quantity', '$rate', '$amount', '$taxName', '$other1')");
@@ -177,9 +179,9 @@
                $totalCartons += $quantity;
                $totalWeight += $lineWeight;
             }
-
+            
             $strInvoiceLines= implode(',', $invoiceLines);
-            if($strInvoiceLines){
+            if(isset($strInvoiceLines)){
                $inserInvoiceQuery = "INSERT INTO qb_invoice_invoiceline(Invoice_TxnID, Item_FullName, Descrip, Quantity, Rate, Amount, SalesTaxCode_FullName, Other1) VALUES $strInvoiceLines;";
                $insertInvoiceStatement=$con_quickbooks->prepare($inserInvoiceQuery);
                $insertInvoiceStatement->execute();
