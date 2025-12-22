@@ -9,9 +9,8 @@
    if($_GET["action"] === 'synchVegInvoice'){
       // $invoiceNo = trim($_GET["invoiceNo"]);
       $flamingoproducelimited='2BB - Flamingo Produce UK Ltd';
-      
+
       $invoiceHeaderQuery = "SELECT InvoiceHeaderId, CustomerId, InvoiceDate, InvoiceNo, ShippingTerms, FlightDate, QBInvoiceNo, Ref FROM InvoiceHeader WHERE Finalized = Yes AND ExporterId = 2 AND InvoiceDate Between #01/01/2025# And #12/31/2026# ORDER BY InvoiceHeaderId";
-      // $invoiceHeaderQuery = "SELECT InvoiceHeaderId, CustomerId, InvoiceDate, InvoiceNo, ShippingTerms, FlightDate, QBInvoiceNo, Ref FROM InvoiceHeader WHERE Finalized = Yes AND ExporterId = 2 AND InvoiceHeaderId = 152481 AND InvoiceDate Between #01/01/2025# And #12/31/2026# ORDER BY InvoiceHeaderId";
       $invoiceHeaderStatement = $con_ho->prepare($invoiceHeaderQuery);
       $invoiceHeaderStatement->execute();
       $invoiceHeaderResults=$invoiceHeaderStatement->fetchAll();
@@ -39,10 +38,12 @@
             $updateInvoiceStatement->execute(array(
                ':InvoiceHeaderId'=> $invoiceHeaderId
             ));
+
             continue;
          }
 
          $customerCode = "";
+         $currency = "";
          $customerQuery = "SELECT CustomerName, CountryId, CustomerCode, CustomerFullName, CurrencyCode, QBCustomerNameFG, FinalInvoiceType FROM Customer WHERE CustomerId = :customerId";
          $customerStatement = $con_gen->prepare($customerQuery);
          $customerStatement->execute(array(
@@ -60,14 +61,31 @@
             $arAcc = "Accounts Receivable - $currency"; 
          }
 
+         $exchangeRate = 1;
+         $exchangeRateQuery = "SELECT TOP 1 EffectiveDate, RateUSD, RateEUR, RateGBP FROM ExchangeRate ORDER BY EffectiveDate DESC;";
+         $exchangeRateStatement = $con_ho->prepare($exchangeRateQuery);
+         $exchangeRateStatement->execute();
+         $exchangeRateResults=$exchangeRateStatement->fetchAll();
+         foreach($exchangeRateResults as $exchangeRateRow){
+            if($currency === "USD"){
+               $exchangeRate = $exchangeRateRow[1];
+            }
+            if($currency === "EUR"){
+               $exchangeRate = $exchangeRateRow[2];
+            }
+            if($currency === "GBP"){
+               $exchangeRate = $exchangeRateRow[3];
+            }
+         }
+
          if(!empty($qbCustName)){
             $template='EUR Invoice';
             $itemtax = $custCountryId == 7 ? 'VAT Zero Rate' : 'VAT Exempt';
             // $template = strtoupper($qbCustName) === strtoupper($flamingoproducelimited) ? 'FUK Invoice' : 'EUR Invoice';
             // $itemtax = $custCountryId === 7 ? 'Z' : 'E';
 
-            $insertQuickbooks = 'INSERT INTO qb_invoice(TxnID, TimeCreated, Customer_FullName, ARAccount_FullName, TxnDate, Template_FullName, RefNumber, PONumber, ShipDate, ItemSalesTax_FullName, Currency_FullName) 
-            VALUES(:txnID, :timeCreated, :qbCustName, :arAcc, :invoiceDate, :template_FullName, :invoiceNo, :qBInvoiceNo, :shipDate, :itemSalesTax_FullName, :currencyName);';
+            $insertQuickbooks = 'INSERT INTO qb_invoice(TxnID, TimeCreated, Customer_FullName, ARAccount_FullName, TxnDate, Template_FullName, RefNumber, PONumber, ShipDate, ItemSalesTax_FullName, Currency_FullName, ExchangeRate) 
+            VALUES(:txnID, :timeCreated, :qbCustName, :arAcc, :invoiceDate, :template_FullName, :invoiceNo, :qBInvoiceNo, :shipDate, :itemSalesTax_FullName, :currencyName, :exchangeRate);';
             $insertQbInvoiceStatement=$con_quickbooks->prepare($insertQuickbooks);
             $insertQbInvoiceResult=$insertQbInvoiceStatement->execute(array(
                ':txnID'=> $txnID,
@@ -80,7 +98,8 @@
                ':qBInvoiceNo' => $QBInvoiceNo,
                ':shipDate' => $flightDate,
                ':itemSalesTax_FullName' => $itemtax,
-               ':currencyName' => $currencyName
+               ':currencyName' => $currencyName,
+               ':exchangeRate' => $exchangeRate
             ));
 
             $invoicelastid = $con_quickbooks->lastInsertId();
@@ -166,8 +185,6 @@
                         if(strtoupper(substr($customerCode, 0, 31)) == 'AL'){
                            $itemfullname = 'Flamingo Produce Ltd'.":".$flamingoitems.":".$productCode.$label;
                         }
-
-                       
                      }
                   }
                }

@@ -7,7 +7,7 @@
    if($_GET["action"] === 'synchRMInvoice'){
       // $invoiceNo = trim($_GET["invoiceNo"]);
 
-      // $item='Roses';
+      $item='Roses';
       $invoiceHeaderQuery = "SELECT InvoiceHeaderId, ClientId, InvoiceDate, InvoiceNo, ShippingTerms, FlightDate, QBInvoiceNo, Ref, DocumentFee FROM InvoiceHeader WHERE Finalized = Yes AND ExporterId = 24 AND InvoiceDate Between #01/01/2025# And #12/31/2026# ORDER BY InvoiceHeaderId";
       $invoiceHeaderStatement = $con_ho->prepare($invoiceHeaderQuery);
       $invoiceHeaderStatement->execute();
@@ -39,7 +39,9 @@
             continue;
          }
 
-         $customerQuery = "SELECT ClientName, Country, ClientCode, CurrencyCode, QBCustomerNameAAA FROM Client WHERE ExporterId = 24 AND ClientId = $custId";
+         $currency = "";
+         $qbCustName = "";
+         $customerQuery = "SELECT ClientName, Country, ClientCode, CurrencyCode, QBCustomerNameAAA FROM Client WHERE ClientId = $custId";
          $customerStatement = $con_gen->prepare($customerQuery);
          $customerStatement->execute();
          $customerResults=$customerStatement->fetchAll();
@@ -51,9 +53,26 @@
             $arAcc = "Accounts Receivable - $currency"; 
          }
 
+         $exchangeRate = 1;
+         $exchangeRateQuery = "SELECT TOP 1 EffectiveDate, RateUSD, RateEUR, RateGBP FROM ExchangeRate ORDER BY EffectiveDate DESC;";
+         $exchangeRateStatement = $con_ho->prepare($exchangeRateQuery);
+         $exchangeRateStatement->execute();
+         $exchangeRateResults=$exchangeRateStatement->fetchAll();
+         foreach($exchangeRateResults as $exchangeRateRow){
+            if($currency === "USD"){
+               $exchangeRate = $exchangeRateRow[1];
+            }
+            if($currency === "EUR"){
+               $exchangeRate = $exchangeRateRow[2];
+            }
+            if($currency === "GBP"){
+               $exchangeRate = $exchangeRateRow[3];
+            }
+         }
+
          if(!empty($qbCustName)){
-            $insertQuickbooks = "INSERT INTO qb_invoice(TxnID, TimeCreated, Customer_FullName, ARAccount_FullName, TxnDate, RefNumber, PONumber, Currency_FullName) 
-            VALUES(:txnID, :timeCreated, :qbCustName, :arAcc, :invoiceDate, :invoiceNo, :qBInvoiceNo, :currencyName);";
+            $insertQuickbooks = "INSERT INTO qb_invoice(TxnID, TimeCreated, Customer_FullName, ARAccount_FullName, TxnDate, RefNumber, PONumber, Currency_FullName, ExchangeRate) 
+            VALUES(:txnID, :timeCreated, :qbCustName, :arAcc, :invoiceDate, :invoiceNo, :qBInvoiceNo, :currencyName, :exchangeRate);";
             $insertQbInvoiceStatement=$con_quickbooks->prepare($insertQuickbooks);
             $insertQbInvoiceResult=$insertQbInvoiceStatement->execute(array(
                ':txnID'=> $txnID,
@@ -63,7 +82,8 @@
                ':invoiceDate' => $invoiceDate,
                ':invoiceNo' => $invoiceNo,
                ':qBInvoiceNo' => $QBInvoiceNo,
-               ':currencyName' => $currencyName
+               ':currencyName' => $currencyName,
+               ':exchangeRate' => $exchangeRate
             ));
 
             $invoicelastid = $con_quickbooks->lastInsertId();
@@ -79,7 +99,6 @@
             $invoiceLineResults=$invoiceLineStatement->fetchAll();
 
             $totalStemQty = 0;
-            // $totalWeight = 0;
             foreach($invoiceLineResults as $invoiceLineRow){
                $invoiceLineId=$invoiceLineRow[0];
                $varietyId=$invoiceLineRow[1];

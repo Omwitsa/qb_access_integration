@@ -3,14 +3,14 @@
    include 'functions.php';
    include 'customers.php';
    include 'items.php';
-   require_once '../../../../configs/2025/veg/aaatest/quickbooks.php';
+   require_once '../../../../configs/2025/veg/fg/quickbooks.php';
 
    $timecreated=date("Y-m-d h:i:sa");
    if($_GET["action"] === 'synchVegInvoice'){
       // $invoiceNo = trim($_GET["invoiceNo"]);
-      $flamingoproducelimited='BB - Flamingo Produce UK Ltd';
+      $flamingoproducelimited='2BB - Flamingo Produce UK Ltd';
 
-      $invoiceHeaderQuery = "SELECT InvoiceHeaderId, CustomerId, InvoiceDate, InvoiceNo, ShippingTerms, FlightDate, QBInvoiceNo, Ref FROM InvoiceHeader WHERE Finalized = Yes AND ExporterId = 1 AND InvoiceDate Between #01/01/2025# And #12/31/2026# ORDER BY InvoiceHeaderId";
+      $invoiceHeaderQuery = "SELECT InvoiceHeaderId, CustomerId, InvoiceDate, InvoiceNo, ShippingTerms, FlightDate, QBInvoiceNo, Ref FROM InvoiceHeader WHERE Finalized = Yes AND ExporterId = 2 AND InvoiceDate Between #01/01/2025# And #12/31/2026# ORDER BY InvoiceHeaderId";
       $invoiceHeaderStatement = $con_ho->prepare($invoiceHeaderQuery);
       $invoiceHeaderStatement->execute();
       $invoiceHeaderResults=$invoiceHeaderStatement->fetchAll();
@@ -44,7 +44,7 @@
 
          $customerCode = "";
          $currency = "";
-         $customerQuery = "SELECT CustomerName, CountryId, CustomerCode, CustomerFullName, CurrencyCode, QBCustomerNameAAA, FinalInvoiceType FROM Customer WHERE CustomerId = :customerId";
+         $customerQuery = "SELECT CustomerName, CountryId, CustomerCode, CustomerFullName, CurrencyCode, QBCustomerNameFG, FinalInvoiceType FROM Customer WHERE CustomerId = :customerId";
          $customerStatement = $con_gen->prepare($customerQuery);
          $customerStatement->execute(array(
             ':customerId'=> $invoiceCustId
@@ -79,8 +79,10 @@
          }
 
          if(!empty($qbCustName)){
-            $template = strtoupper($qbCustName) === strtoupper($flamingoproducelimited) ? 'FUK Invoice' : 'EUR Invoice';
-            $itemtax = $custCountryId === 7 ? 'Z' : 'E';
+            $template='EUR Invoice';
+            $itemtax = $custCountryId == 7 ? 'VAT Zero Rate' : 'VAT Exempt';
+            // $template = strtoupper($qbCustName) === strtoupper($flamingoproducelimited) ? 'FUK Invoice' : 'EUR Invoice';
+            // $itemtax = $custCountryId === 7 ? 'Z' : 'E';
 
             $insertQuickbooks = 'INSERT INTO qb_invoice(TxnID, TimeCreated, Customer_FullName, ARAccount_FullName, TxnDate, Template_FullName, RefNumber, PONumber, ShipDate, ItemSalesTax_FullName, Currency_FullName, ExchangeRate) 
             VALUES(:txnID, :timeCreated, :qbCustName, :arAcc, :invoiceDate, :template_FullName, :invoiceNo, :qBInvoiceNo, :shipDate, :itemSalesTax_FullName, :currencyName, :exchangeRate);';
@@ -103,7 +105,7 @@
             $invoicelastid = $con_quickbooks->lastInsertId();
             // $dbConnectionString = "$mysql_username:$mysql_password@$mysql_servername:$mysql_port/$mysql_dbname";
             // $invoicequeue = new QuickBooks_WebConnector_Queue('mysqli://'. $dbConnectionString);
-            $invoicequeue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170:3306/testvegaaa2025');
+            $invoicequeue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170:3306/vegfg2025');
             $invoicequeue->enqueue(QUICKBOOKS_ADD_INVOICE, $invoicelastid, 903);
 
             $invoiceLines = array();

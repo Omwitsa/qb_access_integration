@@ -1,28 +1,26 @@
 ﻿<?php
    include 'access.php';
    include 'functions.php';
-   require_once '../../../../configs/2025/rm/fg/quickbooks.php';
+   require_once '../../../../configs/2025/rm/fgtest/quickbooks.php';
 
    $timecreated=date("Y-m-d h:i:sa");
-   if($_GET["action"] === 'synchRMInvoice'){
+   if($_GET["action"] === 'synchRMAuctionInvoice'){
       // $invoiceNo = trim($_GET["invoiceNo"]);
 
       $item='Roses';
-      $invoiceHeaderQuery = "SELECT InvoiceHeaderId, ClientId, InvoiceDate, InvoiceNo, ShippingTerms, FlightDate, QBInvoiceNo, Ref, DocumentFee FROM InvoiceHeader WHERE Finalized = Yes AND ExporterId = 25 AND InvoiceDate Between #01/01/2026# And #12/31/2026# ORDER BY InvoiceHeaderId";
+      $invoiceHeaderQuery="SELECT AuctionInvoiceHeaderId, AuctionId, ClientId, InvoiceDate, InvoiceNo, AuctionWeekNo, QBInvoiceNo FROM AuctionInvoiceHeader WHERE Finalized = Yes AND ExporterId = 25 AND InvoiceDate Between #1/1/2025# And #31/12/2026# ORDER BY AuctionInvoiceHeaderId DESC";
       $invoiceHeaderStatement = $con_ho->prepare($invoiceHeaderQuery);
       $invoiceHeaderStatement->execute();
       $invoiceHeaderResults=$invoiceHeaderStatement->fetchAll();
       foreach($invoiceHeaderResults as $invoiceHeaderRow){
          $invoiceHeaderId = $invoiceHeaderRow[0];
          $txnID = $invoiceHeaderId ;
-         $custId = $invoiceHeaderRow[1];
-         $invoiceDate = $invoiceHeaderRow[2];
-         $invoiceNo = $invoiceHeaderRow[3];
-         $shippingTerms = $invoiceHeaderRow[4];
-         $flightDate = $invoiceHeaderRow[5];
+         $auctionId = $invoiceHeaderRow[1];
+         $custId = $invoiceHeaderRow[2];
+         $invoiceDate = $invoiceHeaderRow[3];
+         $invoiceNo = $invoiceHeaderRow[4];
+         $auctionWeekNo = $invoiceHeaderRow[5];
          $QBInvoiceNo = $invoiceHeaderRow[6];
-         $ref = $invoiceHeaderRow[7];
-         $documentFee = $invoiceHeaderRow[8];
 
          $invoiceNo = trim($invoiceNo);
          $qbInvoiceQuery = "SELECT RefNumber FROM qb_invoice WHERE RefNumber = :invoiceNo;";
@@ -33,13 +31,14 @@
          $qbInvoiceRows = $qbInvoiceStatement->rowCount();
 
          if($qbInvoiceRows > 0){
-            $updateInvoiceQuery="UPDATE InvoiceHeader SET QBTransferStatus=1 WHERE InvoiceHeaderId=$invoiceHeaderId";
+            $updateInvoiceQuery="UPDATE AuctionInvoiceHeader SET QBTransferStatus=1 WHERE AuctionInvoiceHeaderId=$invoiceHeaderId";
             $updateInvoiceStatement=$con_ho->prepare($updateInvoiceQuery);
             $updateInvoiceStatement->execute();
             continue;
          }
 
          $currency = "";
+         $qbCustName = "";
          $customerQuery = "SELECT ClientName, Country, ClientCode, CurrencyCode, QBCustomerName FROM Client WHERE ClientId = $custId";
          $customerStatement = $con_gen->prepare($customerQuery);
          $customerStatement->execute();
@@ -69,9 +68,15 @@
             }
          }
 
+         $auctionQuery = "SELECT AuctionName FROM Auction  WHERE AuctionId = $auctionId";
+         $auctionStatement = $con_ho->prepare($auctionQuery);
+         $auctionStatement->execute();
+         $auctionResult = $auctionStatement->fetch();
+         $auctionName = $auctionResult['AuctionName'];
+
          if(!empty($qbCustName)){
-            $insertQuickbooks = "INSERT INTO qb_invoice(TxnID, TimeCreated, Customer_FullName, ARAccount_FullName, TxnDate, RefNumber, PONumber, Currency_FullName, ExchangeRate) 
-            VALUES(:txnID, :timeCreated, :qbCustName, :arAcc, :invoiceDate, :invoiceNo, :qBInvoiceNo, :currencyName, :exchangeRate);";
+            $insertQuickbooks = "INSERT INTO qb_invoice(TxnID, TimeCreated, Customer_FullName, ARAccount_FullName, TxnDate, RefNumber, PONumber, Currency_FullName, ExchangeRate, ShipMethod_FullName) 
+            VALUES(:txnID, :timeCreated, :qbCustName, :arAcc, :invoiceDate, :invoiceNo, :qBInvoiceNo, :currencyName, :exchangeRate,:ShipMethod_FullName);";
             $insertQbInvoiceStatement=$con_quickbooks->prepare($insertQuickbooks);
             $insertQbInvoiceResult=$insertQbInvoiceStatement->execute(array(
                ':txnID'=> $txnID,
@@ -82,63 +87,50 @@
                ':invoiceNo' => $invoiceNo,
                ':qBInvoiceNo' => $QBInvoiceNo,
                ':currencyName' => $currencyName,
-               ':exchangeRate' => $exchangeRate
+               ':exchangeRate' => $exchangeRate,
+               ':ShipMethod_FullName' => $auctionName
             ));
 
             $invoicelastid = $con_quickbooks->lastInsertId();
             // $dbConnectionString = "$mysql_username:$mysql_password@$mysql_servername:$mysql_port/$mysql_dbname";
             // $invoicequeue = new QuickBooks_WebConnector_Queue('mysqli://'. $dbConnectionString);
-            $invoicequeue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170:3306/rosesfg2025');
+            $invoicequeue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170:3306/testrosesfg');
             $invoicequeue->enqueue(QUICKBOOKS_ADD_INVOICE, $invoicelastid, 903);
 
             $invoiceLines = array();
-            $invoiceLineQuery = "SELECT InvoiceLineId, VarietyId, BoxQty, Price, StemQty, StemLength FROM InvoiceLine WHERE InvoiceHeaderId = $invoiceHeaderId"; 
+            // $invoiceLineQuery = "SELECT InvoiceLineId, VarietyId, BoxQty, Price, StemQty, StemLength FROM InvoiceLine WHERE InvoiceHeaderId = $invoiceHeaderId"; 
+            $invoiceLineQuery = "SELECT AuctionWeekNo, AuctionId, VarietyId, StemLength, StemQty, Turnover, ExporterId FROM AuctionSales WHERE AuctionWeekNo=:AuctionWeekNo AND AuctionId=:AuctionId AND ExporterId=:ExporterId"; 
             $invoiceLineStatement = $con_ho->prepare($invoiceLineQuery);
-            $invoiceLineStatement->execute();
+            $invoiceLineStatement->execute(array
+            (
+            ':AuctionWeekNo' => $auctionWeekNo,
+            ':AuctionId' => $auctionId,
+            ':ExporterId' => 25
+            ));
             $invoiceLineResults=$invoiceLineStatement->fetchAll();
-
             $totalStemQty = 0;
             foreach($invoiceLineResults as $invoiceLineRow){
-               $invoiceLineId=$invoiceLineRow[0];
-               $varietyId=$invoiceLineRow[1];
-               $boxQty=$invoiceLineRow[2]; 
-               $price=$invoiceLineRow[3];
-               $stemQty=$invoiceLineRow[4];
-               $stemLength=$invoiceLineRow[5];
+               $varietyId = $invoiceLineRow[2];
+               $stemLength = $invoiceLineRow[3];
+               $stemQty = $invoiceLineRow[4];
+               $turnover = $invoiceLineRow[5];
                $qnty=$stemQty;
 
-               if($varietyId < 1){ // mixed box
-                  $mixedBoxQuery = "SELECT InvoiceLineId, VarietyId, Price, StemQty, StemLength FROM InvoiceLineMix WHERE InvoiceLineId = $invoiceLineId"; 
-                  $mixedBoxStatement = $con_ho->prepare($mixedBoxQuery);
-                  $mixedBoxStatement->execute();
-                  $mixedBoxResults=$mixedBoxStatement->fetchAll();
-                  foreach($mixedBoxResults as $productRow){
-                     $varietyId=$invoiceLineRow[1];
-                     $price=$invoiceLineRow[2];
-                     $mixedStemQty=$invoiceLineRow[3];
-                     $stemLength=$invoiceLineRow[4];
-                     $qnty = $boxQty * $mixedStemQty;
-                  }
-               }
-
-               $productQuery = "SELECT VarietyName FROM Variety WHERE VarietyId=$varietyId";
-               $productStatement = $con_gen->prepare($productQuery);
-               $productStatement->execute();
-               $productResults=$productStatement->fetchAll();
-               foreach($productResults as $productRow){
-                  $varietyname=$productRow[0];
-               }
-
+               $productQuery = "SELECT VarietyName FROM Variety WHERE VarietyId=:VarietyId";
+               $productStatement = $con_ho->prepare($productQuery);
+               $productStatement->execute(array
+               (
+               ':VarietyId' => $varietyId
+               ));
+               $productResult = $productStatement->fetch();
+               $varietyName = $productResult['VarietyName'];
+               $descrip = $varietyName.' - '.$stemLength;
+               $rate=number_format($turnover/$stemQty,3);
                $totalStemQty += $qnty;
-               $descrip = $varietyname.' - '.$stemLength;
-               $rate=number_format($price,4);
-               if($documentFee!=null){
-                  $documentFeeRate=number_format($documentFee,4);
-                  array_push($invoiceLines, "('$txnID', '$item', 'Document fee', '1', '$documentFeeRate')");
-               }
+               
                array_push($invoiceLines, "('$txnID', '$item', '$descrip', '$qnty', '$rate')");
             }
-           
+
             $strInvoiceLines= implode(',', $invoiceLines);
             if($strInvoiceLines){
                $inserInvoiceQuery = "INSERT INTO qb_invoice_invoiceline(Invoice_TxnID, Item_FullName, Descrip, Quantity, Rate) VALUES $strInvoiceLines;";
@@ -150,9 +142,9 @@
             $invoiceHeaderUpdateStatement= $con_quickbooks->prepare($invoiceHeaderUpdateQuery);
             $invoiceHeaderUpdateStatement->execute();
 
-            $invoiceQbStatusUpdate="UPDATE InvoiceHeader SET QBTransferStatus = 1 WHERE InvoiceHeaderId = $invoiceHeaderId;";
-            $invoiceQbStatusUpdateStatement= $con_ho->prepare($invoiceQbStatusUpdate);
-            $invoiceQbStatusUpdateStatement->execute();
+            $updateInvoiceQuery="UPDATE AuctionInvoiceHeader SET QBTransferStatus=1 WHERE AuctionInvoiceHeaderId=$invoiceHeaderId";
+            $updateInvoiceStatement=$con_ho->prepare($updateInvoiceQuery);
+            $updateInvoiceStatement->execute();
          }
       }
 
