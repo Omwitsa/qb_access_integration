@@ -1,10 +1,10 @@
 ﻿<?php
    include 'access.php';
-   include 'functions.php';
-   require_once '../../../../configs/2025/rm/fgtest/quickbooks.php';
-
    $timecreated=date("Y-m-d h:i:sa");
    if($_GET["action"] === 'syncRmBills'){
+      include 'functions.php';
+      require_once '../../../../configs/2025/rm/fgtest/quickbooks.php';
+
       $billsQuery = "SELECT InvoiceHeaderId, AgentInvoiceValue, AgentVAT, AgentInvoiceDate, FlightNo, AWBChargeableWeight, AWB, InvoiceNo, AgentInvoiceNo, HandlingAgentId, Ref FROM InvoiceHeader WHERE ExporterId = 25 AND AgentInvoiceNo is not Null AND AgentInvoiceDate Between #7/1/2025# And #12/31/2026#  ORDER BY InvoiceHeaderId";
       $billStatement = $con_ho->prepare($billsQuery);
       $billStatement->execute();
@@ -93,5 +93,32 @@
       $response->message = 'Bills Synched successfully';
 
       echo json_encode($response);
+   }
+
+   if($_GET["action"] === 'billsWithErrors'){
+      
+      $bills = array();
+      $qbBillsQuery = "SELECT Vendor_FullName, RefNumber, APAccount_FullName, TxnDate, qbsql_last_errmsg, TimeCreated FROM qb_bill WHERE qbsql_last_errmsg IS NOT NULL ORDER BY TxnDate;";
+      $qbBillStatement = $con_quickbooks->prepare($qbBillsQuery);
+      $qbBillStatement->execute();
+      $billsResults=$qbBillStatement->fetchAll();
+      foreach($billsResults as $billRow){
+         $bill = new stdClass();
+         $bill->vendor = $billRow[0];
+         $bill->ref = $billRow[1];
+         $bill->accountPayable = $billRow[2];
+         $bill->date = $billRow[3];
+         $bill->error = $billRow[4];
+         $bill->timeCreated = $billRow[5];
+
+         array_push($bills, $bill);
+      }
+
+      $output = new stdClass();
+      $output->success = true;
+      $output->message = "Posted successfully";
+      // $output->data = "";
+     
+      echo json_encode($output);
    }
 ?>

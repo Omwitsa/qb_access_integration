@@ -104,7 +104,7 @@
             // $dbConnectionString = "$mysql_username:$mysql_password@$mysql_servername:$mysql_port/$mysql_dbname";
             // $invoicequeue = new QuickBooks_WebConnector_Queue('mysqli://'. $dbConnectionString);
             $invoicequeue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170:3306/testvegaaa2025');
-            $invoicequeue->enqueue(QUICKBOOKS_ADD_INVOICE, $invoicelastid, 903);
+            $invoicequeue->enqueue(QUICKBOOKS_ADD_INVOICE, $invoicelastid, 6);
 
             $invoiceLines = array();
             $invoiceLineQuery = "SELECT InvoiceLineId, ProductId, BoxCount, BoxQty, Price, LineValue, LabFL, LabBL, LabPL, CustomerBranchId FROM InvoiceLine WHERE InvoiceHeaderId = $invoiceHeaderId"; 
