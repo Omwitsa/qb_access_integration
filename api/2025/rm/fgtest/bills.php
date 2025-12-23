@@ -96,8 +96,7 @@
    }
 
    if($_GET["action"] === 'billsWithErrors'){
-      
-      $bills = array();
+      $results["bills"] = array();
       $qbBillsQuery = "SELECT Vendor_FullName, RefNumber, APAccount_FullName, TxnDate, qbsql_last_errmsg, TimeCreated FROM qb_bill WHERE qbsql_last_errmsg IS NOT NULL ORDER BY TxnDate;";
       $qbBillStatement = $con_quickbooks->prepare($qbBillsQuery);
       $qbBillStatement->execute();
@@ -105,19 +104,19 @@
       foreach($billsResults as $billRow){
          $bill = new stdClass();
          $bill->vendor = $billRow[0];
-         $bill->ref = $billRow[1];
+         $bill->refNo = $billRow[1];
          $bill->accountPayable = $billRow[2];
          $bill->date = $billRow[3];
          $bill->error = $billRow[4];
          $bill->timeCreated = $billRow[5];
 
-         array_push($bills, $bill);
+         array_push($results["bills"], $bill);
       }
 
       $output = new stdClass();
       $output->success = true;
       $output->message = "Posted successfully";
-      // $output->data = "";
+      $output->data = $results;
      
       echo json_encode($output);
    }
