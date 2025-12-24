@@ -1,12 +1,12 @@
 ﻿<?php
    include 'access.php';
-   include 'functions.php';
-   include 'customers.php';
-   include 'items.php';
-   require_once '../../../../configs/2025/veg/aaatest/quickbooks.php';
-
+   
    $timecreated=date("Y-m-d h:i:sa");
    if($_GET["action"] === 'synchVegInvoice'){
+      include 'customers.php';
+      include 'items.php';
+      include 'functions.php';
+      require_once '../../../../configs/2025/veg/aaatest/quickbooks.php';
       // $invoiceNo = trim($_GET["invoiceNo"]);
       $flamingoproducelimited='BB - Flamingo Produce UK Ltd';
 
@@ -104,7 +104,7 @@
             // $dbConnectionString = "$mysql_username:$mysql_password@$mysql_servername:$mysql_port/$mysql_dbname";
             // $invoicequeue = new QuickBooks_WebConnector_Queue('mysqli://'. $dbConnectionString);
             $invoicequeue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170:3306/testvegaaa2025');
-            $invoicequeue->enqueue(QUICKBOOKS_ADD_INVOICE, $invoicelastid, 6);
+            $invoicequeue->enqueue(QUICKBOOKS_ADD_INVOICE, $invoicelastid, 903);
 
             $invoiceLines = array();
             $invoiceLineQuery = "SELECT InvoiceLineId, ProductId, BoxCount, BoxQty, Price, LineValue, LabFL, LabBL, LabPL, CustomerBranchId FROM InvoiceLine WHERE InvoiceHeaderId = $invoiceHeaderId"; 
@@ -218,5 +218,43 @@
       $response->message = 'Invoice Synched successfully';
 
       echo json_encode($response);
+   }
+
+   if($_GET["action"] === 'getVegAAAInvoicesStats'){
+      $results["invoices"] = array();
+      $qbInvoicesQuery = "SELECT Customer_FullName, RefNumber, ARAccount_FullName, TxnDate, qbsql_last_errmsg, TimeCreated FROM qb_invoice WHERE qbsql_last_errmsg IS NOT NULL ORDER BY RefNumber DESC;";
+      $qbInvoiceStatement = $con_quickbooks->prepare($qbInvoicesQuery);
+      $qbInvoiceStatement->execute();
+      $invoicesResults=$qbInvoiceStatement->fetchAll();
+      foreach($invoicesResults as $row){
+         $invoice = new stdClass();
+         $invoice->customer = $row[0];
+         $invoice->refNo = $row[1];
+         $invoice->accountRecievable = $row[2];
+         $invoice->date = $row[3];
+         $invoice->error = $row[4];
+         $invoice->timeCreated = $row[5];
+
+         array_push($results["invoices"], $invoice);
+      }
+
+      $stagedInvoiceCountQuery = "SELECT COUNT(*) FROM qb_invoice WHERE TimeModified IS NULL;";
+      $stagedInvoiceCountStatement = $con_quickbooks->prepare($stagedInvoiceCountQuery);
+      $stagedInvoiceCountStatement->execute();
+      $stagedInvoiceCount = $stagedInvoiceCountStatement->fetchColumn();
+      $results["stagedInvoiceCount"] = $stagedInvoiceCount;
+
+      $unsynchedInvoiceCountQuery = "SELECT COUNT(*) FROM InvoiceHeader WHERE Finalized = Yes AND ExporterId = 1 AND  QBTransferStatus = 0 AND InvoiceDate Between #01/01/2025# And #12/31/2026#";
+      $unsynchedInvoiceCountStatement = $con_ho->prepare($unsynchedInvoiceCountQuery);
+      $unsynchedInvoiceCountStatement->execute();
+      $unsynchedInvoiceCount = $unsynchedInvoiceCountStatement->fetchColumn();
+      $results["unsynchedInvoiceCount"] = $unsynchedInvoiceCount;
+
+      $output = new stdClass();
+      $output->success = true;
+      $output->message = "Successfull";
+      $output->data = $results;
+     
+      echo json_encode($output);
    }
 ?>

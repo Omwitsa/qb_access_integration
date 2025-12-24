@@ -107,4 +107,41 @@
 
       echo json_encode($response);
    }
+   if($_GET["action"] === 'getVegFGInvoicesStats'){
+      $results["items"] = array();
+      $qbInvoicesQuery = "SELECT Customer_FullName, RefNumber, ARAccount_FullName, TxnDate, qbsql_last_errmsg, TimeCreated FROM qb_creditmemo WHERE qbsql_last_errmsg IS NOT NULL ORDER BY RefNumber DESC;";
+      $qbInvoiceStatement = $con_quickbooks->prepare($qbInvoicesQuery);
+      $qbInvoiceStatement->execute();
+      $invoicesResults=$qbInvoiceStatement->fetchAll();
+      foreach($invoicesResults as $row){
+         $item = new stdClass();
+         $item->customer = $row[0];
+         $item->refNo = $row[1];
+         $item->accountRecievable = $row[2];
+         $item->date = $row[3];
+         $item->error = $row[4];
+         $item->timeCreated = $row[5];
+
+         array_push($results["items"], $item);
+      }
+
+      $stagedCountQuery = "SELECT COUNT(*) FROM qb_creditmemo WHERE TimeModified IS NULL;";
+      $stagedCountStatement = $con_quickbooks->prepare($stagedCountQuery);
+      $stagedCountStatement->execute();
+      $stagedCount = $stagedCountStatement->fetchColumn();
+      $results["stagedCount"] = $stagedCount;
+
+      $unsynchedCountQuery = "SELECT COUNT(*) FROM CreditNote WHERE Finalized = Yes AND ExporterId = 2 AND  QBTransferStatus = 0 AND InvoiceDate Between #01/01/2025# And #12/31/2026#";
+      $unsynchedCountStatement = $con_ho->prepare($unsynchedCountQuery);
+      $unsynchedCountStatement->execute();
+      $unsynchedInvoiceCount = $unsynchedCountStatement->fetchColumn();
+      $results["unsynchedCount"] = $unsynchedCount;
+
+      $output = new stdClass();
+      $output->success = true;
+      $output->message = "Successfull";
+      $output->data = $results;
+     
+      echo json_encode($output);
+   }
 ?>
