@@ -1,10 +1,11 @@
 ﻿<?php
    include 'access.php';
-   require_once '../../../../configs/2025/veg/fgtest/quickbooks.php';
 
    $timecreated=date("Y-m-d h:i:sa");
    if($_GET["action"] === 'syncVegCreditNotes'){
-      $creditNoteQuery = "SELECT CreditNoteId, CreditNoteNo, CreditNoteDate, CreditNoteValue, CustomerId, Notes FROM CreditNote WHERE CreditNoteDate Between #7/12/2025# And #12/31/2026#  ORDER BY CreditNoteId";
+      require_once '../../../../configs/2025/veg/fgtest/quickbooks.php';
+      
+      $creditNoteQuery = "SELECT CreditNoteId, CreditNoteNo, CreditNoteDate, CreditNoteValue, CustomerId, Notes FROM CreditNote WHERE ExporterId = 2 AND CreditNoteDate Between #7/12/2025# And #12/31/2026#  ORDER BY CreditNoteId";
       $creditNoteStatement = $con_ho->prepare($creditNoteQuery);
       $creditNoteStatement->execute();
       $creditNoteResults=$creditNoteStatement->fetchAll();
@@ -31,6 +32,12 @@
          $qbIdStatement->execute();
          $qbIdRows = $qbIdStatement->rowCount();
          if($qbIdRows > 0){
+            $query="UPDATE CreditNote SET QBTransferStatus=1 WHERE CreditNoteId = :creditNoteId";
+            $updateStatement=$con_ho->prepare($query);
+            $updateStatement->execute(array(
+               ':creditNoteId'=> $creditNoteId
+            ));
+
             continue;
          }
 
@@ -107,7 +114,7 @@
 
       echo json_encode($response);
    }
-   if($_GET["action"] === 'getVegFGInvoicesStats'){
+   if($_GET["action"] === 'getVegFgCreditNotesStats'){
       $results["items"] = array();
       $qbInvoicesQuery = "SELECT Customer_FullName, RefNumber, ARAccount_FullName, TxnDate, qbsql_last_errmsg, TimeCreated FROM qb_creditmemo WHERE qbsql_last_errmsg IS NOT NULL ORDER BY RefNumber DESC;";
       $qbInvoiceStatement = $con_quickbooks->prepare($qbInvoicesQuery);
@@ -131,7 +138,7 @@
       $stagedCount = $stagedCountStatement->fetchColumn();
       $results["stagedCount"] = $stagedCount;
 
-      $unsynchedCountQuery = "SELECT COUNT(*) FROM CreditNote WHERE Finalized = Yes AND ExporterId = 2 AND  QBTransferStatus = 0 AND InvoiceDate Between #01/01/2025# And #12/31/2026#";
+      $unsynchedCountQuery = "SELECT COUNT(*) FROM CreditNote WHERE ExporterId = 2 AND QBTransferStatus = 0 AND CreditNoteDate Between #7/12/2025# And #12/31/2026#";
       $unsynchedCountStatement = $con_ho->prepare($unsynchedCountQuery);
       $unsynchedCountStatement->execute();
       $unsynchedInvoiceCount = $unsynchedCountStatement->fetchColumn();
