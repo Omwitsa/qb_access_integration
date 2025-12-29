@@ -6,7 +6,7 @@
       include 'customers.php';
       include 'items.php';
       include 'functions.php';
-      require_once '../../../../configs/2025/veg/aaatest/quickbooks.php';
+      require_once '../../../../configs/2025/veg/aaa/quickbooks.php';
       // $invoiceNo = trim($_GET["invoiceNo"]);
       $flamingoproducelimited='BB - Flamingo Produce UK Ltd';
 
@@ -103,7 +103,7 @@
             $invoicelastid = $con_quickbooks->lastInsertId();
             // $dbConnectionString = "$mysql_username:$mysql_password@$mysql_servername:$mysql_port/$mysql_dbname";
             // $invoicequeue = new QuickBooks_WebConnector_Queue('mysqli://'. $dbConnectionString);
-            $invoicequeue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170:3306/testvegaaa2025');
+            $invoicequeue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170:3306/vegaaa2025');
             $invoicequeue->enqueue(QUICKBOOKS_ADD_INVOICE, $invoicelastid, 903);
 
             $invoiceLines = array();

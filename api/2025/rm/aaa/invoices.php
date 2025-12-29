@@ -3,12 +3,12 @@
 
    $timecreated=date("Y-m-d h:i:sa");
    if($_GET["action"] === 'synchRMInvoice'){
-      include 'functions.php';
-      require_once '../../../../configs/2025/rm/fgtest/quickbooks.php';
       // $invoiceNo = trim($_GET["invoiceNo"]);
 
+      include 'functions.php';
+      require_once '../../../../configs/2025/rm/aaa/quickbooks.php';
       $item='Roses';
-      $invoiceHeaderQuery = "SELECT InvoiceHeaderId, ClientId, InvoiceDate, InvoiceNo, ShippingTerms, FlightDate, QBInvoiceNo, Ref, DocumentFee FROM InvoiceHeader WHERE Finalized = Yes AND ExporterId = 25 AND InvoiceDate Between #1/1/2026# AND #31/12/2026# ORDER BY InvoiceHeaderId";
+      $invoiceHeaderQuery = "SELECT InvoiceHeaderId, ClientId, InvoiceDate, InvoiceNo, ShippingTerms, FlightDate, QBInvoiceNo, Ref, DocumentFee FROM InvoiceHeader WHERE Finalized = Yes AND ExporterId = 24 AND InvoiceDate Between #1/1/2026# AND #31/12/2026# ORDER BY InvoiceHeaderId";
       $invoiceHeaderStatement = $con_ho->prepare($invoiceHeaderQuery);
       $invoiceHeaderStatement->execute();
       $invoiceHeaderResults=$invoiceHeaderStatement->fetchAll();
@@ -40,7 +40,8 @@
          }
 
          $currency = "";
-         $customerQuery = "SELECT ClientName, Country, ClientCode, CurrencyCode, QBCustomerName FROM Client WHERE ClientId = $custId";
+         $qbCustName = "";
+         $customerQuery = "SELECT ClientName, Country, ClientCode, CurrencyCode, QBCustomerNameAAA FROM Client WHERE ClientId = $custId";
          $customerStatement = $con_gen->prepare($customerQuery);
          $customerStatement->execute();
          $customerResults=$customerStatement->fetchAll();
@@ -88,7 +89,7 @@
             $invoicelastid = $con_quickbooks->lastInsertId();
             // $dbConnectionString = "$mysql_username:$mysql_password@$mysql_servername:$mysql_port/$mysql_dbname";
             // $invoicequeue = new QuickBooks_WebConnector_Queue('mysqli://'. $dbConnectionString);
-            $invoicequeue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170:3306/testrosesfg');
+            $invoicequeue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170:3306/rosesaaa2025');
             $invoicequeue->enqueue(QUICKBOOKS_ADD_INVOICE, $invoicelastid, 903);
 
             $invoiceLines = array();
@@ -164,7 +165,7 @@
       echo json_encode($response);
    }
 
-   if($_GET["action"] === 'getRmFgInvoicesStats'){
+   if($_GET["action"] === 'getRmAAAInvoicesStats'){
       $results["invoices"] = array();
       $qbInvoicesQuery = "SELECT Customer_FullName, RefNumber, ARAccount_FullName, TxnDate, qbsql_last_errmsg, TimeCreated FROM qb_invoice WHERE qbsql_last_errmsg IS NOT NULL ORDER BY RefNumber DESC;";
       $qbInvoiceStatement = $con_quickbooks->prepare($qbInvoicesQuery);
@@ -186,15 +187,15 @@
       $stagedInvoiceCountStatement = $con_quickbooks->prepare($stagedInvoiceCountQuery);
       $stagedInvoiceCountStatement->execute();
       $stagedInvoiceCount = $stagedInvoiceCountStatement->fetchColumn();
-      $results["stagedInvoiceCount"] = $stagedInvoiceCount;
+      $results["stagedInvoiceCount"] = $results;
 
-      $unsynchedInvoiceCountQuery = "SELECT COUNT(*) FROM InvoiceHeader WHERE Finalized = Yes AND ExporterId = 25 AND  QBTransferStatus = 0 AND InvoiceDate Between #01/01/2025# And #12/31/2026#";
+      $unsynchedInvoiceCountQuery = "SELECT COUNT(*) FROM InvoiceHeader WHERE Finalized = Yes AND ExporterId = 24 AND  QBTransferStatus = 0 AND InvoiceDate Between #01/01/2025# And #12/31/2026#";
       $unsynchedInvoiceCountStatement = $con_ho->prepare($unsynchedInvoiceCountQuery);
       $unsynchedInvoiceCountStatement->execute();
       $unsynchedInvoiceCount = $unsynchedInvoiceCountStatement->fetchColumn();
       $results["unsynchedInvoiceCount"] = $unsynchedInvoiceCount;
 
-      $unsynchedAuctionInvoiceCountQuery = "SELECT COUNT(*) FROM AuctionInvoiceHeader WHERE Finalized = Yes AND ExporterId = 25 AND  QBTransferStatus = 0 AND InvoiceDate Between #01/01/2025# And #12/31/2026#";
+      $unsynchedAuctionInvoiceCountQuery = "SELECT COUNT(*) FROM AuctionInvoiceHeader WHERE Finalized = Yes AND ExporterId = 24 AND  QBTransferStatus = 0 AND InvoiceDate Between #01/01/2025# And #12/31/2026#";
       $unsynchedAuctionInvoiceCountStatement = $con_ho->prepare($unsynchedAuctionInvoiceCountQuery);
       $unsynchedAuctionInvoiceCountStatement->execute();
       $unsynchedAuctionInvoiceCount = $unsynchedAuctionInvoiceCountStatement->fetchColumn();

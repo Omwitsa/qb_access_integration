@@ -8,7 +8,7 @@
       // $invoiceNo = trim($_GET["invoiceNo"]);
 
       $item='Roses';
-      $invoiceHeaderQuery="SELECT AuctionInvoiceHeaderId, AuctionId, ClientId, InvoiceDate, InvoiceNo, AuctionWeekNo, QBInvoiceNo FROM AuctionInvoiceHeader WHERE Finalized = Yes AND ExporterId = 25 AND InvoiceDate Between #1/1/2025# And #31/12/2026# ORDER BY AuctionInvoiceHeaderId DESC";
+      $invoiceHeaderQuery="SELECT AuctionInvoiceHeaderId, AuctionId, ClientId, InvoiceDate, InvoiceNo, AuctionWeekNo, QBInvoiceNo FROM AuctionInvoiceHeader WHERE Finalized = Yes AND ExporterId = 25 AND InvoiceDate Between #1/1/2026# AND #31/12/2026# ORDER BY AuctionInvoiceHeaderId DESC";
       $invoiceHeaderStatement = $con_ho->prepare($invoiceHeaderQuery);
       $invoiceHeaderStatement->execute();
       $invoiceHeaderResults=$invoiceHeaderStatement->fetchAll();

@@ -1,6 +1,6 @@
 ﻿<?php
    include 'access.php';
-   require_once '../../../../configs/2025/veg/fgtest/quickbooks.php';
+   require_once '../../../../configs/2025/veg/aaa/quickbooks.php';
 
    $timecreated=date("Y-m-d h:i:sa");
    $customerQuery = "SELECT CustomerId, CustomerName, CountryId, Active, CustomerFullName, CustomerAddress, CustomerAddress2, EmailRecepients, CurrencyCode, ShippingTerms, DropOffId, CollectionPointId, FinalInvoiceType, QBCustomerNameFG FROM Customer ORDER BY CurrencyCode ASC";
@@ -81,7 +81,7 @@
             $customerlastid = $con_quickbooks->lastInsertId();
             // $dbConnectionString = "$mysql_username:$mysql_password@$mysql_servername:$mysql_port/$mysql_dbname";
             // $invoicequeue = new QuickBooks_WebConnector_Queue('mysqli://'. $dbConnectionString);
-            $customerequeue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170:3306/testvegfg2025');
+            $customerequeue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170:3306/vegaaa2025');
             $customerequeue->enqueue(QUICKBOOKS_ADD_CUSTOMER, $customerlastid, 908);
          }
       }

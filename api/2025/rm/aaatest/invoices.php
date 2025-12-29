@@ -8,7 +8,7 @@
       include 'functions.php';
       require_once '../../../../configs/2025/rm/aaatest/quickbooks.php';
       $item='Roses';
-      $invoiceHeaderQuery = "SELECT InvoiceHeaderId, ClientId, InvoiceDate, InvoiceNo, ShippingTerms, FlightDate, QBInvoiceNo, Ref, DocumentFee FROM InvoiceHeader WHERE Finalized = Yes AND ExporterId = 24 AND InvoiceDate Between #01/01/2025# And #12/31/2026# ORDER BY InvoiceHeaderId";
+      $invoiceHeaderQuery = "SELECT InvoiceHeaderId, ClientId, InvoiceDate, InvoiceNo, ShippingTerms, FlightDate, QBInvoiceNo, Ref, DocumentFee FROM InvoiceHeader WHERE Finalized = Yes AND ExporterId = 24 AND InvoiceDate Between #1/1/2026# AND #31/12/2026# ORDER BY InvoiceHeaderId";
       $invoiceHeaderStatement = $con_ho->prepare($invoiceHeaderQuery);
       $invoiceHeaderStatement->execute();
       $invoiceHeaderResults=$invoiceHeaderStatement->fetchAll();
@@ -183,7 +183,7 @@
          array_push($results["invoices"], $invoice);
       }
 
-      $stagedInvoiceCountQuery = "SELECT COUNT(*) FROM qb_invoice WHERE TimeModified IS NULL;";
+      $stagedInvoiceCountQuery = "SELECT COUNT(*) FROM qb_invoice WHERE TimeModified IS NULL AND qbsql_last_errmsg IS NULL;";
       $stagedInvoiceCountStatement = $con_quickbooks->prepare($stagedInvoiceCountQuery);
       $stagedInvoiceCountStatement->execute();
       $stagedInvoiceCount = $stagedInvoiceCountStatement->fetchColumn();

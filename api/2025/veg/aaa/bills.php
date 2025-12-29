@@ -111,4 +111,35 @@
 
       echo json_encode($response);
    }
+   if($_GET["action"] === 'getVegaaaBillsStats'){
+      $results["items"] = array();
+      $qbQuery = "SELECT Vendor_FullName, RefNumber, APAccount_FullName, TxnDate, qbsql_last_errmsg, TimeCreated FROM qb_bill WHERE qbsql_last_errmsg IS NOT NULL ORDER BY RefNumber DESC;";
+      $qbStatement = $con_quickbooks->prepare($qbQuery);
+      $qbStatement->execute();
+      $qbResults=$qbStatement->fetchAll();
+      foreach($qbResults as $row){
+         $item = new stdClass();
+         $item->vendor = $row[0];
+         $item->refNo = $row[1];
+         $item->accountPayable = $row[2];
+         $item->date = $row[3];
+         $item->error = $row[4];
+         $item->timeCreated = $row[5];
+
+         array_push($results["items"], $item);
+      }
+
+      $stagedCountQuery = "SELECT COUNT(*) FROM qb_bill WHERE TimeModified IS NULL AND qbsql_last_errmsg IS NULL;";
+      $stagedCountStatement = $con_quickbooks->prepare($stagedCountQuery);
+      $stagedCountStatement->execute();
+      $stagedCount = $stagedCountStatement->fetchColumn();
+      $results["stagedCount"] = $stagedCount;
+
+      $output = new stdClass();
+      $output->success = true;
+      $output->message = "Successfull";
+      $output->data = $results;
+     
+      echo json_encode($output);
+   }
 ?>

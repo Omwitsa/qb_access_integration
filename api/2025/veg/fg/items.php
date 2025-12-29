@@ -59,7 +59,7 @@
                   
                   $qbItemLastid = $con_quickbooks->lastInsertId();
                   $qbItemQueue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170/vegfg2025');
-                  $qbItemQueue->enqueue(QUICKBOOKS_ADD_NONINVENTORYITEM, $qbItemLastid, 9);
+                  $qbItemQueue->enqueue(QUICKBOOKS_ADD_NONINVENTORYITEM, $qbItemLastid, 907);
                }
 
                $sublevel = $itemCount > 0 ? 1 : $sublevel;
@@ -78,7 +78,7 @@
                   
                   $qbItemLastid = $con_quickbooks->lastInsertId();
                   $qbItemQueue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170/vegfg2025');
-                  $qbItemQueue->enqueue(QUICKBOOKS_ADD_NONINVENTORYITEM, $qbItemLastid, 7);
+                  $qbItemQueue->enqueue(QUICKBOOKS_ADD_NONINVENTORYITEM, $qbItemLastid, 905);
                }
             }
          }
@@ -122,7 +122,7 @@
                   
                   $qbItemLastid = $con_quickbooks->lastInsertId();
                   $qbItemQueue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170/vegfg2025');
-                  $qbItemQueue->enqueue(QUICKBOOKS_ADD_NONINVENTORYITEM, $qbItemLastid, 9);
+                  $qbItemQueue->enqueue(QUICKBOOKS_ADD_NONINVENTORYITEM, $qbItemLastid, 907);
                }
 
                $parentfullName = $itemfullname;
@@ -141,7 +141,7 @@
                   
                   $qbItemLastid = $con_quickbooks->lastInsertId();
                   $qbItemQueue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170/vegfg2025');
-                  $qbItemQueue->enqueue(QUICKBOOKS_ADD_NONINVENTORYITEM, $qbItemLastid, 8);
+                  $qbItemQueue->enqueue(QUICKBOOKS_ADD_NONINVENTORYITEM, $qbItemLastid, 906);
                }
 
                $qbItemStatement = $con_quickbooks->prepare('SELECT COUNT(*) FROM qb_itemnoninventory WHERE Parent_FullName=:Parent_FullName');
@@ -187,7 +187,7 @@
                   
                   $qbItemLastid = $con_quickbooks->lastInsertId();
                   $qbItemQueue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170/vegfg2025');
-                  $qbItemQueue->enqueue(QUICKBOOKS_ADD_NONINVENTORYITEM, $qbItemLastid, 7);
+                  $qbItemQueue->enqueue(QUICKBOOKS_ADD_NONINVENTORYITEM, $qbItemLastid, 905);
                }
             }
          }

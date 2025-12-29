@@ -10,7 +10,7 @@
       // $invoiceNo = trim($_GET["invoiceNo"]);
       $flamingoproducelimited='2BB - Flamingo Produce UK Ltd';
 
-      $invoiceHeaderQuery = "SELECT InvoiceHeaderId, CustomerId, InvoiceDate, InvoiceNo, ShippingTerms, FlightDate, QBInvoiceNo, Ref FROM InvoiceHeader WHERE Finalized = Yes AND ExporterId = 2 AND InvoiceDate Between #01/01/2025# And #12/31/2026# ORDER BY InvoiceHeaderId";
+      $invoiceHeaderQuery = "SELECT InvoiceHeaderId, CustomerId, InvoiceDate, InvoiceNo, ShippingTerms, FlightDate, QBInvoiceNo, Ref FROM InvoiceHeader WHERE Finalized = Yes AND ExporterId = 2 AND InvoiceDate Between #1/1/2026# AND #31/12/2026# ORDER BY InvoiceHeaderId";
       $invoiceHeaderStatement = $con_ho->prepare($invoiceHeaderQuery);
       $invoiceHeaderStatement->execute();
       $invoiceHeaderResults=$invoiceHeaderStatement->fetchAll();
@@ -239,7 +239,7 @@
          array_push($results["invoices"], $invoice);
       }
 
-      $stagedInvoiceCountQuery = "SELECT COUNT(*) FROM qb_invoice WHERE TimeModified IS NULL;";
+      $stagedInvoiceCountQuery = "SELECT COUNT(*) FROM qb_invoice WHERE TimeModified IS NULL AND qbsql_last_errmsg IS NULL;";
       $stagedInvoiceCountStatement = $con_quickbooks->prepare($stagedInvoiceCountQuery);
       $stagedInvoiceCountStatement->execute();
       $stagedInvoiceCount = $stagedInvoiceCountStatement->fetchColumn();

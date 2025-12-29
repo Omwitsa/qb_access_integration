@@ -1,7 +1,7 @@
 ﻿<?php
    include 'access.php';
    include 'functions.php';
-   require_once '../../../../configs/2025/rm/aaatest/quickbooks.php';
+   require_once '../../../../configs/2025/rm/aaa/quickbooks.php';
 
    $timecreated=date("Y-m-d h:i:sa");
    if($_GET["action"] === 'synchRMAuctionInvoice'){
@@ -94,7 +94,7 @@
             $invoicelastid = $con_quickbooks->lastInsertId();
             // $dbConnectionString = "$mysql_username:$mysql_password@$mysql_servername:$mysql_port/$mysql_dbname";
             // $invoicequeue = new QuickBooks_WebConnector_Queue('mysqli://'. $dbConnectionString);
-            $invoicequeue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170:3306/testrosesaaa');
+            $invoicequeue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170:3306/rosesaaa2025');
             $invoicequeue->enqueue(QUICKBOOKS_ADD_INVOICE, $invoicelastid, 903);
 
             $invoiceLines = array();

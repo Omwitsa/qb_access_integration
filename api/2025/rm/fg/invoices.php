@@ -1,14 +1,14 @@
 ﻿<?php
    include 'access.php';
-   include 'functions.php';
-   require_once '../../../../configs/2025/rm/fg/quickbooks.php';
 
    $timecreated=date("Y-m-d h:i:sa");
    if($_GET["action"] === 'synchRMInvoice'){
+      include 'functions.php';
+      require_once '../../../../configs/2025/rm/fg/quickbooks.php';
       // $invoiceNo = trim($_GET["invoiceNo"]);
 
       $item='Roses';
-      $invoiceHeaderQuery = "SELECT InvoiceHeaderId, ClientId, InvoiceDate, InvoiceNo, ShippingTerms, FlightDate, QBInvoiceNo, Ref, DocumentFee FROM InvoiceHeader WHERE Finalized = Yes AND ExporterId = 25 AND InvoiceDate Between #01/01/2026# And #12/31/2026# ORDER BY InvoiceHeaderId";
+      $invoiceHeaderQuery = "SELECT InvoiceHeaderId, ClientId, InvoiceDate, InvoiceNo, ShippingTerms, FlightDate, QBInvoiceNo, Ref, DocumentFee FROM InvoiceHeader WHERE Finalized = Yes AND ExporterId = 25 AND InvoiceDate Between #1/1/2026# AND #31/12/2026# ORDER BY InvoiceHeaderId";
       $invoiceHeaderStatement = $con_ho->prepare($invoiceHeaderQuery);
       $invoiceHeaderStatement->execute();
       $invoiceHeaderResults=$invoiceHeaderStatement->fetchAll();
@@ -162,5 +162,49 @@
       $response->message = 'Invoice Synched successfully';
 
       echo json_encode($response);
+   }
+
+   if($_GET["action"] === 'getRmFgInvoicesStats'){
+      $results["invoices"] = array();
+      $qbInvoicesQuery = "SELECT Customer_FullName, RefNumber, ARAccount_FullName, TxnDate, qbsql_last_errmsg, TimeCreated FROM qb_invoice WHERE qbsql_last_errmsg IS NOT NULL ORDER BY RefNumber DESC;";
+      $qbInvoiceStatement = $con_quickbooks->prepare($qbInvoicesQuery);
+      $qbInvoiceStatement->execute();
+      $invoicesResults=$qbInvoiceStatement->fetchAll();
+      foreach($invoicesResults as $row){
+         $invoice = new stdClass();
+         $invoice->customer = $row[0];
+         $invoice->refNo = $row[1];
+         $invoice->accountRecievable = $row[2];
+         $invoice->date = $row[3];
+         $invoice->error = $row[4];
+         $invoice->timeCreated = $row[5];
+
+         array_push($results["invoices"], $invoice);
+      }
+
+      $stagedInvoiceCountQuery = "SELECT COUNT(*) FROM qb_invoice WHERE TimeModified IS NULL AND qbsql_last_errmsg IS NULL;";
+      $stagedInvoiceCountStatement = $con_quickbooks->prepare($stagedInvoiceCountQuery);
+      $stagedInvoiceCountStatement->execute();
+      $stagedInvoiceCount = $stagedInvoiceCountStatement->fetchColumn();
+      $results["stagedInvoiceCount"] = $stagedInvoiceCount;
+
+      $unsynchedInvoiceCountQuery = "SELECT COUNT(*) FROM InvoiceHeader WHERE Finalized = Yes AND ExporterId = 25 AND  QBTransferStatus = 0 AND InvoiceDate Between #01/01/2025# And #12/31/2026#";
+      $unsynchedInvoiceCountStatement = $con_ho->prepare($unsynchedInvoiceCountQuery);
+      $unsynchedInvoiceCountStatement->execute();
+      $unsynchedInvoiceCount = $unsynchedInvoiceCountStatement->fetchColumn();
+      $results["unsynchedInvoiceCount"] = $unsynchedInvoiceCount;
+
+      $unsynchedAuctionInvoiceCountQuery = "SELECT COUNT(*) FROM AuctionInvoiceHeader WHERE Finalized = Yes AND ExporterId = 25 AND  QBTransferStatus = 0 AND InvoiceDate Between #01/01/2025# And #12/31/2026#";
+      $unsynchedAuctionInvoiceCountStatement = $con_ho->prepare($unsynchedAuctionInvoiceCountQuery);
+      $unsynchedAuctionInvoiceCountStatement->execute();
+      $unsynchedAuctionInvoiceCount = $unsynchedAuctionInvoiceCountStatement->fetchColumn();
+      $results["unsynchedAuctionInvoiceCount"] = $unsynchedAuctionInvoiceCount;
+
+      $output = new stdClass();
+      $output->success = true;
+      $output->message = "Successfull";
+      $output->data = $results;
+     
+      echo json_encode($output);
    }
 ?>

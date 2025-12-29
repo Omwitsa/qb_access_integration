@@ -1,6 +1,6 @@
 ﻿<?php
    include 'access.php';
-   require_once '../../../../configs/2025/veg/aaatest/quickbooks.php';
+   require_once '../../../../configs/2025/veg/aaa/quickbooks.php';
 
    $timecreated=date("Y-m-d h:i:sa");
    $productQuery = "SELECT ProductId, ProductCode, ProductName, ProductCode2, ProductTypeId, CustomerId, NetPackWtKg, BoxCount, Price, ClientCategoryId	FROM Product ORDER BY ProductId ASC";
@@ -58,7 +58,7 @@
                   ':SalesTaxCode_FullName' => "Tax", ':SalesOrPurchase_Account_FullName' => "INCOME:Sales - Vegetables" ));
                   
                   $qbItemLastid = $con_quickbooks->lastInsertId();
-                  $qbItemQueue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170/testvegaaa2025');
+                  $qbItemQueue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170/vegaaa2025');
                   $qbItemQueue->enqueue(QUICKBOOKS_ADD_NONINVENTORYITEM, $qbItemLastid, 907);
                }
 
@@ -77,7 +77,7 @@
                   ':SalesOrPurchase_Price' => $price, ':SalesOrPurchase_Account_FullName' => "INCOME:Sales - Vegetables" ));
                   
                   $qbItemLastid = $con_quickbooks->lastInsertId();
-                  $qbItemQueue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170/testvegaaa2025');
+                  $qbItemQueue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170/vegaaa2025');
                   $qbItemQueue->enqueue(QUICKBOOKS_ADD_NONINVENTORYITEM, $qbItemLastid, 905);
                }
             }
@@ -121,7 +121,7 @@
                   ':SalesTaxCode_FullName' => "Tax", ':SalesOrPurchase_Account_FullName' => "INCOME:Sales - Vegetables" ));
                   
                   $qbItemLastid = $con_quickbooks->lastInsertId();
-                  $qbItemQueue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170/testvegaaa2025');
+                  $qbItemQueue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170/vegaaa2025');
                   $qbItemQueue->enqueue(QUICKBOOKS_ADD_NONINVENTORYITEM, $qbItemLastid, 907);
                }
 
@@ -140,7 +140,7 @@
                   ':Parent_FullName' => $parentfullName, ':Sublevel' => 1, ':SalesTaxCode_FullName' => "Tax", ':SalesOrPurchase_Account_FullName' => "INCOME:Sales - Vegetables" ));
                   
                   $qbItemLastid = $con_quickbooks->lastInsertId();
-                  $qbItemQueue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170/testvegaaa2025');
+                  $qbItemQueue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170/vegaaa2025');
                   $qbItemQueue->enqueue(QUICKBOOKS_ADD_NONINVENTORYITEM, $qbItemLastid, 906);
                }
 
@@ -186,7 +186,7 @@
                   ':SalesOrPurchase_Price' => $price, ':SalesOrPurchase_Account_FullName' => "INCOME:Sales - Vegetables" ));
                   
                   $qbItemLastid = $con_quickbooks->lastInsertId();
-                  $qbItemQueue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170/testvegaaa2025');
+                  $qbItemQueue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170/vegaaa2025');
                   $qbItemQueue->enqueue(QUICKBOOKS_ADD_NONINVENTORYITEM, $qbItemLastid, 905);
                }
             }

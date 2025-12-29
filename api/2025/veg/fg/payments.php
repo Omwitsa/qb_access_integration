@@ -1,10 +1,11 @@
 ﻿<?php
    include 'access.php';
-   require_once '../../../../configs/2025/veg/fg/quickbooks.php';
 
    $timecreated=date("Y-m-d h:i:sa");
    if($_GET["action"] === 'syncVegPayments'){
-      $custPaymentQuery = "SELECT CustomerPaymentId, CustomerId, PaymentDate, IIf(IsNull([ForeignAmountPaid]),0,[ForeignAmountPaid])+IIf(IsNull([OtherAmount]),0,[OtherAmount]) +IIf(IsNull([RebateAmount]),0,[RebateAmount])  AS Amount, BankId, Description FROM CustomerPayment WHERE PaymentDate Between #5/19/2025# And #12/31/2026# ORDER BY CustomerPaymentId";
+      require_once '../../../../configs/2025/veg/fg/quickbooks.php';
+
+      $custPaymentQuery = "SELECT CustomerPaymentId, CustomerId, PaymentDate, IIf(IsNull([ForeignAmountPaid]),0,[ForeignAmountPaid])+IIf(IsNull([OtherAmount]),0,[OtherAmount]) +IIf(IsNull([RebateAmount]),0,[RebateAmount])  AS Amount, BankId, Description FROM CustomerPayment WHERE ExporterId = 2 AND PaymentDate Between #5/19/2025# And #12/31/2026# ORDER BY CustomerPaymentId";
 
       $custPAymentStatement = $con_ho->prepare($custPaymentQuery);
       $custPAymentStatement->execute();
@@ -18,11 +19,21 @@
          $bankId = $custPaymentRow[4] ? $custPaymentRow[4] : 0;
          $memo = $custPaymentRow[5];
 
+         if($amount < 1){
+            continue;
+         }
+
          $qbPaymentQuery = "SELECT RefNumber FROM qb_receivepayment WHERE RefNumber = '$paymentId';";
          $qbPaymentStatement = $con_quickbooks->prepare($qbPaymentQuery);
          $qbPaymentStatement->execute();
          $qbPaymentRows = $qbPaymentStatement->rowCount();
          if($qbPaymentRows > 0){
+            $query="UPDATE CustomerPayment SET QBTransferStatus=1 WHERE CustomerPaymentId = :paymentId";
+            $updateStatement=$con_ho->prepare($query);
+            $updateStatement->execute(array(
+               ':paymentId'=> $paymentId
+            ));
+            
             continue;
          }
 
@@ -34,7 +45,7 @@
          foreach($bankResults as $bankRow){
             $accDepositedTo = $bankRow[0];
          }
-
+         
          $qbCustName = "";
          $customerQuery = "SELECT CustomerName, CountryId, CustomerCode, CustomerFullName, CurrencyCode, QBCustomerNameFG, FinalInvoiceType FROM Customer WHERE CustomerId = $custId";
          $customerStatement = $con_gen->prepare($customerQuery);
@@ -108,5 +119,42 @@
       $response->message = 'Payments Synched successfully';
 
       echo json_encode($response);
+   }
+   if($_GET["action"] === 'getVegFgPaymentsStats'){
+      $results["items"] = array();
+      $qbQuery = "SELECT Customer_FullName, RefNumber, ARAccount_FullName, TxnDate, qbsql_last_errmsg, TimeCreated FROM qb_receivepayment WHERE qbsql_last_errmsg IS NOT NULL ORDER BY RefNumber DESC;";
+      $qbStatement = $con_quickbooks->prepare($qbQuery);
+      $qbStatement->execute();
+      $qbResults=$qbStatement->fetchAll();
+      foreach($qbResults as $row){
+         $item = new stdClass();
+         $item->customer = $row[0];
+         $item->refNo = $row[1];
+         $item->accountRecievable = $row[2];
+         $item->date = $row[3];
+         $item->error = $row[4];
+         $item->timeCreated = $row[5];
+
+         array_push($results["items"], $item);
+      }
+
+      $stagedCountQuery = "SELECT COUNT(*) FROM qb_receivepayment WHERE TimeModified IS NULL AND qbsql_last_errmsg IS NULL;";
+      $stagedCountStatement = $con_quickbooks->prepare($stagedCountQuery);
+      $stagedCountStatement->execute();
+      $stagedCount = $stagedCountStatement->fetchColumn();
+      $results["stagedCount"] = $stagedCount;
+
+      $unsynchedCountQuery = "SELECT COUNT(*) FROM CustomerPayment WHERE ExporterId = 2 AND QBTransferStatus = 0 AND PaymentDate Between #7/12/2025# And #12/31/2026#";
+      $unsynchedCountStatement = $con_ho->prepare($unsynchedCountQuery);
+      $unsynchedCountStatement->execute();
+      $unsynchedCount = $unsynchedCountStatement->fetchColumn();
+      $results["unsynchedCount"] = $unsynchedCount;
+
+      $output = new stdClass();
+      $output->success = true;
+      $output->message = "Successfull";
+      $output->data = $results;
+     
+      echo json_encode($output);
    }
 ?>

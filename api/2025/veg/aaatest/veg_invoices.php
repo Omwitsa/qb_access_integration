@@ -106,7 +106,8 @@
 
             $lineWeight = $netweightkg * $invoiceLineRow[2] * $quantity;
             $other1 = $lineWeight.'Kgs net';
-            array_push($invoiceLines, "('$txnID', '$itemfullname', '$descrip', '$quantity', '$rate', '$amount', '$taxName', '$other1')");
+            array_push($invoiceLines, "('$txnID', '$itemfullname', '$descrip', '$quantity', '$rate', '$amount', '$
+            ', '$other1')");
 
             $totalCartons += $quantity;
             $totalWeight += $lineWeight;

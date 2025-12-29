@@ -1,10 +1,12 @@
 ﻿<?php
    include 'access.php';
-   require_once '../../../../configs/2025/rm/aaa/quickbooks.php';
 
    $timecreated=date("Y-m-d h:i:sa");
    if($_GET["action"] === 'syncRmCreditNotes'){
-      $creditNoteQuery = "SELECT CreditNoteId, CreditNoteNo, CreditNoteDate, CreditNoteValue, ClientId, Notes FROM CreditNote WHERE CreditNoteDate Between #7/12/2025# And #12/31/2026#  ORDER BY CreditNoteId";
+      require_once '../../../../configs/2025/rm/aaa/quickbooks.php';
+      
+
+      $creditNoteQuery = "SELECT CreditNoteId, CreditNoteNo, CreditNoteDate, CreditNoteValue, ClientId, Notes FROM CreditNote WHERE ExporterId = 24 AND CreditNoteDate Between #7/12/2025# And #12/31/2026#  ORDER BY CreditNoteId";
       $creditNoteStatement = $con_ho->prepare($creditNoteQuery);
       $creditNoteStatement->execute();
       $creditNoteResults=$creditNoteStatement->fetchAll();
@@ -31,6 +33,12 @@
          $qbIdStatement->execute();
          $qbIdRows = $qbIdStatement->rowCount();
          if($qbIdRows > 0){
+            $query="UPDATE CreditNote SET QBTransferStatus=1 WHERE CreditNoteId = :creditNoteId";
+            $updateStatement=$con_ho->prepare($query);
+            $updateStatement->execute(array(
+               ':creditNoteId'=> $creditNoteId
+            ));
+            
             continue;
          }
 
@@ -103,5 +111,42 @@
       $response->message = 'Credit notes Synched successfully';
 
       echo json_encode($response);
+   }
+   if($_GET["action"] === 'getRmAaaCreditNotesStats'){
+      $results["items"] = array();
+      $qbInvoicesQuery = "SELECT Customer_FullName, RefNumber, ARAccount_FullName, TxnDate, qbsql_last_errmsg, TimeCreated FROM qb_creditmemo WHERE qbsql_last_errmsg IS NOT NULL ORDER BY RefNumber DESC;";
+      $qbInvoiceStatement = $con_quickbooks->prepare($qbInvoicesQuery);
+      $qbInvoiceStatement->execute();
+      $invoicesResults=$qbInvoiceStatement->fetchAll();
+      foreach($invoicesResults as $row){
+         $item = new stdClass();
+         $item->customer = $row[0];
+         $item->refNo = $row[1];
+         $item->accountRecievable = $row[2];
+         $item->date = $row[3];
+         $item->error = $row[4];
+         $item->timeCreated = $row[5];
+
+         array_push($results["items"], $item);
+      }
+
+      $stagedCountQuery = "SELECT COUNT(*) FROM qb_creditmemo WHERE TimeModified IS NULL AND qbsql_last_errmsg IS NULL;";
+      $stagedCountStatement = $con_quickbooks->prepare($stagedCountQuery);
+      $stagedCountStatement->execute();
+      $stagedCount = $stagedCountStatement->fetchColumn();
+      $results["stagedCount"] = $stagedCount;
+
+      $unsynchedCountQuery = "SELECT COUNT(*) FROM CreditNote WHERE ExporterId = 24 AND QBTransferStatus = 0 AND CreditNoteDate Between #7/12/2025# And #12/31/2026#";
+      $unsynchedCountStatement = $con_ho->prepare($unsynchedCountQuery);
+      $unsynchedCountStatement->execute();
+      $unsynchedCount = $unsynchedCountStatement->fetchColumn();
+      $results["unsynchedCount"] = $unsynchedCount;
+
+      $output = new stdClass();
+      $output->success = true;
+      $output->message = "Successfull";
+      $output->data = $results;
+     
+      echo json_encode($output);
    }
 ?>

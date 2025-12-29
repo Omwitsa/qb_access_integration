@@ -1,10 +1,10 @@
 ﻿<?php
    include 'access.php';
-   include 'functions.php';
-   require_once '../../../../configs/2025/rm/fg/quickbooks.php';
-
    $timecreated=date("Y-m-d h:i:sa");
    if($_GET["action"] === 'syncRmBills'){
+      include 'functions.php';
+      require_once '../../../../configs/2025/rm/fg/quickbooks.php';
+
       $billsQuery = "SELECT InvoiceHeaderId, AgentInvoiceValue, AgentVAT, AgentInvoiceDate, FlightNo, AWBChargeableWeight, AWB, InvoiceNo, AgentInvoiceNo, HandlingAgentId, Ref FROM InvoiceHeader WHERE ExporterId = 25 AND AgentInvoiceNo is not Null AND AgentInvoiceDate Between #7/1/2025# And #12/31/2026#  ORDER BY InvoiceHeaderId";
       $billStatement = $con_ho->prepare($billsQuery);
       $billStatement->execute();
@@ -93,5 +93,62 @@
       $response->message = 'Bills Synched successfully';
 
       echo json_encode($response);
+   }
+
+   if($_GET["action"] === 'billsWithErrors'){
+      $results["bills"] = array();
+      $qbBillsQuery = "SELECT Vendor_FullName, RefNumber, APAccount_FullName, TxnDate, qbsql_last_errmsg, TimeCreated FROM qb_bill WHERE qbsql_last_errmsg IS NOT NULL ORDER BY TxnDate;";
+      $qbBillStatement = $con_quickbooks->prepare($qbBillsQuery);
+      $qbBillStatement->execute();
+      $billsResults=$qbBillStatement->fetchAll();
+      foreach($billsResults as $billRow){
+         $bill = new stdClass();
+         $bill->vendor = $billRow[0];
+         $bill->refNo = $billRow[1];
+         $bill->accountPayable = $billRow[2];
+         $bill->date = $billRow[3];
+         $bill->error = $billRow[4];
+         $bill->timeCreated = $billRow[5];
+
+         array_push($results["bills"], $bill);
+      }
+
+      $output = new stdClass();
+      $output->success = true;
+      $output->message = "Posted successfully";
+      $output->data = $results;
+     
+      echo json_encode($output);
+   }
+   if($_GET["action"] === 'getRMFgBillsStats'){
+      $results["items"] = array();
+      $qbQuery = "SELECT Vendor_FullName, RefNumber, APAccount_FullName, TxnDate, qbsql_last_errmsg, TimeCreated FROM qb_bill WHERE qbsql_last_errmsg IS NOT NULL ORDER BY RefNumber DESC;";
+      $qbStatement = $con_quickbooks->prepare($qbQuery);
+      $qbStatement->execute();
+      $qbResults=$qbStatement->fetchAll();
+      foreach($qbResults as $row){
+         $item = new stdClass();
+         $item->vendor = $row[0];
+         $item->refNo = $row[1];
+         $item->accountPayable = $row[2];
+         $item->date = $row[3];
+         $item->error = $row[4];
+         $item->timeCreated = $row[5];
+
+         array_push($results["items"], $item);
+      }
+
+      $stagedCountQuery = "SELECT COUNT(*) FROM qb_bill WHERE TimeModified IS NULL AND qbsql_last_errmsg IS NULL;";
+      $stagedCountStatement = $con_quickbooks->prepare($stagedCountQuery);
+      $stagedCountStatement->execute();
+      $stagedCount = $stagedCountStatement->fetchColumn();
+      $results["stagedCount"] = $stagedCount;
+
+      $output = new stdClass();
+      $output->success = true;
+      $output->message = "Successfull";
+      $output->data = $results;
+     
+      echo json_encode($output);
    }
 ?>

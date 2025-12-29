@@ -137,7 +137,7 @@
          array_push($results["items"], $item);
       }
 
-      $stagedCountQuery = "SELECT COUNT(*) FROM qb_receivepayment WHERE TimeModified IS NULL;";
+      $stagedCountQuery = "SELECT COUNT(*) FROM qb_receivepayment WHERE TimeModified IS NULL AND qbsql_last_errmsg IS NULL;";
       $stagedCountStatement = $con_quickbooks->prepare($stagedCountQuery);
       $stagedCountStatement->execute();
       $stagedCount = $stagedCountStatement->fetchColumn();

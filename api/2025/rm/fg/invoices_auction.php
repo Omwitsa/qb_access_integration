@@ -1,14 +1,14 @@
 ﻿<?php
    include 'access.php';
    include 'functions.php';
-   require_once '../../../../configs/2025/rm/aaatest/quickbooks.php';
+   require_once '../../../../configs/2025/rm/fg/quickbooks.php';
 
    $timecreated=date("Y-m-d h:i:sa");
    if($_GET["action"] === 'synchRMAuctionInvoice'){
       // $invoiceNo = trim($_GET["invoiceNo"]);
-      
+
       $item='Roses';
-      $invoiceHeaderQuery="SELECT AuctionInvoiceHeaderId, AuctionId, ClientId, InvoiceDate, InvoiceNo, AuctionWeekNo, QBInvoiceNo FROM AuctionInvoiceHeader WHERE Finalized = Yes AND ExporterId = 24 AND InvoiceDate Between #1/1/2026# AND #31/12/2026# ORDER BY AuctionInvoiceHeaderId DESC";
+      $invoiceHeaderQuery="SELECT AuctionInvoiceHeaderId, AuctionId, ClientId, InvoiceDate, InvoiceNo, AuctionWeekNo, QBInvoiceNo FROM AuctionInvoiceHeader WHERE Finalized = Yes AND ExporterId = 25 AND InvoiceDate Between #1/1/2026# AND #31/12/2026# ORDER BY AuctionInvoiceHeaderId DESC";
       $invoiceHeaderStatement = $con_ho->prepare($invoiceHeaderQuery);
       $invoiceHeaderStatement->execute();
       $invoiceHeaderResults=$invoiceHeaderStatement->fetchAll();
@@ -39,7 +39,7 @@
 
          $currency = "";
          $qbCustName = "";
-         $customerQuery = "SELECT ClientName, Country, ClientCode, CurrencyCode, QBCustomerNameAAA FROM Client WHERE ClientId = $custId";
+         $customerQuery = "SELECT ClientName, Country, ClientCode, CurrencyCode, QBCustomerName FROM Client WHERE ClientId = $custId";
          $customerStatement = $con_gen->prepare($customerQuery);
          $customerStatement->execute();
          $customerResults=$customerStatement->fetchAll();
@@ -94,7 +94,7 @@
             $invoicelastid = $con_quickbooks->lastInsertId();
             // $dbConnectionString = "$mysql_username:$mysql_password@$mysql_servername:$mysql_port/$mysql_dbname";
             // $invoicequeue = new QuickBooks_WebConnector_Queue('mysqli://'. $dbConnectionString);
-            $invoicequeue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170:3306/testrosesaaa');
+            $invoicequeue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170:3306/rosesfg2025');
             $invoicequeue->enqueue(QUICKBOOKS_ADD_INVOICE, $invoicelastid, 903);
 
             $invoiceLines = array();
@@ -105,7 +105,7 @@
             (
             ':AuctionWeekNo' => $auctionWeekNo,
             ':AuctionId' => $auctionId,
-            ':ExporterId' => 24
+            ':ExporterId' => 25
             ));
             $invoiceLineResults=$invoiceLineStatement->fetchAll();
             $totalStemQty = 0;

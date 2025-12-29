@@ -82,7 +82,7 @@
             // $dbConnectionString = "$mysql_username:$mysql_password@$mysql_servername:$mysql_port/$mysql_dbname";
             // $invoicequeue = new QuickBooks_WebConnector_Queue('mysqli://'. $dbConnectionString);
             $customerequeue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170:3306/testvegaaa2025');
-            $customerequeue->enqueue(QUICKBOOKS_ADD_CUSTOMER, $customerlastid, 10);
+            $customerequeue->enqueue(QUICKBOOKS_ADD_CUSTOMER, $customerlastid, 908);
          }
       }
    }
