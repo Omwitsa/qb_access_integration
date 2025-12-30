@@ -20,11 +20,12 @@
       $price = $productRow[8];
       $custCategoryId=$productRow[9];
 
-      $descrip = $productCode2."-".substr($productName, 0, 29)."x".$productBoxCount;
-      $descrip = $productBoxCount < 1 ? $productCode2."-".substr($productName, 0, 29)."".$productBoxCount : $descrip;
+      $productName = str_replace(" ", "", substr($productName, 0, 29));
+      $descrip = $productCode2."-".$productName."x".$productBoxCount;
+      $descrip = $productBoxCount < 1 ? $productCode2."-".$productName."".$productBoxCount : $descrip;
       if(strlen($productCode2) < 1){
-         $descrip = substr($productName, 0, 29)."x".$productBoxCount;
-         $descrip = $productBoxCount < 1 ? substr($productName, 0, 29)."".$productBoxCount : $descrip;
+         $descrip = $productName."x".$productBoxCount;
+         $descrip = $productBoxCount < 1 ? $productName."".$productBoxCount : $descrip;
       }
 
       $subitem = str_replace(" ", "", $descrip);
@@ -40,7 +41,8 @@
             ));
          $custCategoryResults=$custCategoryStatement->fetchAll();
          foreach($custCategoryResults as $custCategoryRow){
-            $custCategoryName = $custCategoryRow[0];
+            $custCategoryName = $custCategoryRow[0] ? $custCategoryRow[0] : "";
+            $custCategoryName = trim($custCategoryName);
             if(strlen($custCategoryName) > 0){
                $flamingoitems = 'Mini'.'-'.$custCategoryName;
                $itemfullname = $flamingoitems.":".$subitem;
@@ -92,7 +94,8 @@
          $customerResults=$customerStatement->fetchAll();
          foreach($customerResults as $customerRow){
             $customerCode = $customerRow[1];
-            $customerFullName = $customerRow[2];
+            $customerFullName = $customerRow[2] ? $customerRow[2] : "";
+            $customerFullName = trim($customerFullName);
          }
 
          $productTypeName = "";
@@ -103,7 +106,9 @@
             ));
          $productTypeResults=$productTypeStatement->fetchAll();
          foreach($productTypeResults as $productTypeRow){
-            $productTypeName = $productTypeRow[0];
+            $productTypeName = $productTypeRow[0] ? $productTypeRow[0] : "";
+            $productTypeName = trim($productTypeName);
+
             $flamingoitems = substr($customerCode, 0, 31)." ".$productTypeName;
             $flamingoitems = strlen($productTypeName) < 1 ? substr($customerCode, 0, 31) : $flamingoitems;
             if(isset($customerFullName)){
