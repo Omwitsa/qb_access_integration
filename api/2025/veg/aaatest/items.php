@@ -41,9 +41,9 @@
             ));
          $custCategoryResults=$custCategoryStatement->fetchAll();
          foreach($custCategoryResults as $custCategoryRow){
-            $custCategoryName = $custCategoryRow[0] ? $custCategoryRow[0] : "";
-            $custCategoryName = trim($custCategoryName);
+            $custCategoryName = $custCategoryRow[0];
             if(strlen($custCategoryName) > 0){
+               $custCategoryName = trim($custCategoryName);
                $flamingoitems = 'Mini'.'-'.$custCategoryName;
                $itemfullname = $flamingoitems.":".$subitem;
 
@@ -94,8 +94,7 @@
          $customerResults=$customerStatement->fetchAll();
          foreach($customerResults as $customerRow){
             $customerCode = $customerRow[1];
-            $customerFullName = $customerRow[2] ? $customerRow[2] : "";
-            $customerFullName = trim($customerFullName);
+            $customerFullName = $customerRow[2];
          }
 
          $productTypeName = "";
@@ -106,11 +105,12 @@
             ));
          $productTypeResults=$productTypeStatement->fetchAll();
          foreach($productTypeResults as $productTypeRow){
-            $productTypeName = $productTypeRow[0] ? $productTypeRow[0] : "";
-            $productTypeName = trim($productTypeName);
+            $productTypeName = $productTypeRow[0];
+            $productTypeName = isset($productTypeName) ? trim($productTypeName) : $productTypeName;
             $flamingoitems = substr($customerCode, 0, 31)." ".$productTypeName;
             $flamingoitems = strlen($productTypeName) < 1 ? substr($customerCode, 0, 31) : $flamingoitems;
             if(isset($customerFullName)){
+               $customerFullName = trim($customerFullName);
                $itemfullname = substr($customerFullName, 0, 31);
                $qbItemStatement = $con_quickbooks->prepare('SELECT COUNT(*) FROM qb_itemnoninventory WHERE FullName=:FullName');
                $qbItemStatement->execute(array(

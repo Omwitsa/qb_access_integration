@@ -53,8 +53,8 @@
          foreach($customerResults as $customerRow){
             $custCountryId = $customerRow[1];
             $customerCode = $customerRow[2];
-            $customerFullName = $customerRow[3] ? $customerRow[3] : "";
-            $customerFullName = trim($customerFullName);
+            $customerFullName = $customerRow[3];
+            $customerFullName = isset($customerFullName) ? trim($customerFullName) : $customerFullName;
             $currency = $customerRow[4];
             $qbCustName = $customerRow[5];
             $finalInvoiceType = $customerRow[6];
@@ -163,9 +163,9 @@
                         ));
                      $custCategoryResults=$custCategoryStatement->fetchAll();
                      foreach($custCategoryResults as $custCategoryRow){
-                        $custCategoryName = $custCategoryRow[0] ? $custCategoryRow[0] : "";
-                        $custCategoryName = trim($custCategoryName);
+                        $custCategoryName = $custCategoryRow[0];
                         if(strlen($custCategoryName) > 0){
+                           $custCategoryName = trim($custCategoryName);
                            $flamingoitems = 'Mini'.'-'.$custCategoryName;
                            $itemfullname = $flamingoitems.":".$subitem;
                         }
@@ -180,8 +180,8 @@
                         ));
                      $productTypeResults=$productTypeStatement->fetchAll();
                      foreach($productTypeResults as $productTypeRow){
-                        $productTypeName = $productTypeRow[0] ? $productTypeRow[0] : "";
-                        $productTypeName = trim($productTypeName);
+                        $productTypeName = $productTypeRow[0];
+                        $productTypeName = isset($productTypeName) ? trim($productTypeName) : $productTypeName;
                         $flamingoitems = substr($customerCode, 0, 31)." ".$productTypeName;
                         $flamingoitems = strlen($productTypeName) < 1 ? substr($customerCode, 0, 31) : $flamingoitems;
                         $itemfullname = substr($customerFullName, 0, 31).":".$flamingoitems.":".$subitem;
