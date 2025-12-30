@@ -4,7 +4,7 @@
    $timecreated=date("Y-m-d h:i:sa");
    if($_GET["action"] === 'syncRmPayments'){
       require_once '../../../../configs/2025/rm/fgtest/quickbooks.php';
-      $custPaymentQuery = "SELECT CustomerPaymentId, ClientId, PaymentDate, IIf(IsNull([ForeignAmountPaid]),0,[ForeignAmountPaid])+IIf(IsNull([OtherAmount]),0,[OtherAmount]) +IIf(IsNull([RebateAmount]),0,[RebateAmount])  AS Amount, BankId, Description FROM CustomerPayment WHERE ExporterId = 25 AND PaymentDate Between #6/1/2025# And #12/31/2026# ORDER BY CustomerPaymentId";
+      $custPaymentQuery = "SELECT CustomerPaymentId, ClientId, PaymentDate, IIf(IsNull([ForeignAmountPaid]),0,[ForeignAmountPaid])+IIf(IsNull([OtherAmount]),0,[OtherAmount]) +IIf(IsNull([RebateAmount]),0,[RebateAmount])  AS Amount, BankId, Description FROM CustomerPayment WHERE ExporterId = 25 AND PaymentDate Between #6/1/2025# AND #12/31/2026# ORDER BY CustomerPaymentId";
 
       $custPAymentStatement = $con_ho->prepare($custPaymentQuery);
       $custPAymentStatement->execute();
@@ -141,7 +141,7 @@
       $stagedCount = $stagedCountStatement->fetchColumn();
       $results["stagedCount"] = $stagedCount;
 
-      $unsynchedCountQuery = "SELECT COUNT(*) FROM CustomerPayment WHERE ExporterId = 25 AND QBTransferStatus = 0 AND PaymentDate Between #7/12/2025# And #12/31/2026#";
+      $unsynchedCountQuery = "SELECT COUNT(*) FROM CustomerPayment WHERE ExporterId = 25 AND QBTransferStatus = 0 AND PaymentDate Between #6/1/2025# AND #12/31/2026#";
       $unsynchedCountStatement = $con_ho->prepare($unsynchedCountQuery);
       $unsynchedCountStatement->execute();
       $unsynchedCount = $unsynchedCountStatement->fetchColumn();

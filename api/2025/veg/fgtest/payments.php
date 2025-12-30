@@ -5,7 +5,7 @@
    if($_GET["action"] === 'syncVegPayments'){
       require_once '../../../../configs/2025/veg/fgtest/quickbooks.php';
 
-      $custPaymentQuery = "SELECT CustomerPaymentId, CustomerId, PaymentDate, IIf(IsNull([ForeignAmountPaid]),0,[ForeignAmountPaid])+IIf(IsNull([OtherAmount]),0,[OtherAmount]) +IIf(IsNull([RebateAmount]),0,[RebateAmount])  AS Amount, BankId, Description FROM CustomerPayment WHERE ExporterId = 2 AND PaymentDate Between #5/19/2025# And #12/31/2026# ORDER BY CustomerPaymentId";
+      $custPaymentQuery = "SELECT CustomerPaymentId, CustomerId, PaymentDate, IIf(IsNull([ForeignAmountPaid]),0,[ForeignAmountPaid])+IIf(IsNull([OtherAmount]),0,[OtherAmount]) +IIf(IsNull([RebateAmount]),0,[RebateAmount])  AS Amount, BankId, Description FROM CustomerPayment WHERE ExporterId = 2 AND PaymentDate Between #5/19/2025# AND #12/31/2026# ORDER BY CustomerPaymentId";
 
       $custPAymentStatement = $con_ho->prepare($custPaymentQuery);
       $custPAymentStatement->execute();
@@ -144,7 +144,7 @@
       $stagedCount = $stagedCountStatement->fetchColumn();
       $results["stagedCount"] = $stagedCount;
 
-      $unsynchedCountQuery = "SELECT COUNT(*) FROM CustomerPayment WHERE ExporterId = 2 AND QBTransferStatus = 0 AND PaymentDate Between #7/12/2025# And #12/31/2026#";
+      $unsynchedCountQuery = "SELECT COUNT(*) FROM CustomerPayment WHERE ExporterId = 2 AND QBTransferStatus = 0 AND PaymentDate Between #5/19/2025# AND #12/31/2026#";
       $unsynchedCountStatement = $con_ho->prepare($unsynchedCountQuery);
       $unsynchedCountStatement->execute();
       $unsynchedCount = $unsynchedCountStatement->fetchColumn();

@@ -248,7 +248,7 @@
       $stagedInvoiceCount = $stagedInvoiceCountStatement->fetchColumn();
       $results["stagedInvoiceCount"] = $stagedInvoiceCount;
 
-      $unsynchedInvoiceCountQuery = "SELECT COUNT(*) FROM InvoiceHeader WHERE Finalized = Yes AND ExporterId = 1 AND  QBTransferStatus = 0 AND InvoiceDate Between #01/01/2025# And #12/31/2026#";
+      $unsynchedInvoiceCountQuery = "SELECT COUNT(*) FROM InvoiceHeader WHERE Finalized = Yes AND ExporterId = 1 AND  QBTransferStatus = 0 AND InvoiceDate Between #1/1/2026# AND #31/12/2026#";
       $unsynchedInvoiceCountStatement = $con_ho->prepare($unsynchedInvoiceCountQuery);
       $unsynchedInvoiceCountStatement->execute();
       $unsynchedInvoiceCount = $unsynchedInvoiceCountStatement->fetchColumn();
