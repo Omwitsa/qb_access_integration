@@ -17,10 +17,9 @@
          $price = $productRow[8];
          $custCategoryId=$productRow[9];
 
-         // $productCode2-
          $productName = str_replace(" ", "", substr($productName, 0, 29));
-         $descrip = $productCode2."_".$productName."x".$productBoxCount;
-         $descrip = $productBoxCount < 1 ? $productCode2."_".$productName."".$productBoxCount : $descrip;
+         $descrip = $productCode2."-".$productName."x".$productBoxCount;
+         $descrip = $productBoxCount < 1 ? $productCode2."-".$productName."".$productBoxCount : $descrip;
          if(strlen($productCode2) < 1){
             $descrip = $productName."x".$productBoxCount;
             $descrip = $productBoxCount < 1 ? $productName."".$productBoxCount : $descrip;
