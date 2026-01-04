@@ -129,6 +129,8 @@
                $taxName = 'Tax';
 
                $labels = strtoupper($qbCustName) == strtoupper($flamingoproducelimited) ? $labFL.$labBL.$labPL : null;
+               insertItem($productId,$con_gen, $con_quickbooks, $timecreated);
+
                $productQuery = "SELECT ProductId, ProductCode, ProductName, ProductCode2, ProductTypeId, CustomerId, NetPackWtKg, BoxCount, Price, ClientCategoryId FROM Product WHERE ProductId = $productId";
                $productStatement = $con_gen->prepare($productQuery);
                $productStatement->execute();
@@ -144,8 +146,8 @@
                   $custCategoryId=$productRow[9];
 
                   $productName = str_replace(" ", "", substr($productName, 0, 29));
-                  $descrip = $productCode2."-".$productName."x".$productBoxCount;
-                  $descrip = $productBoxCount < 1 ? $productCode2."-".$productName."".$productBoxCount : $descrip;
+                  $descrip = $productCode2."_".$productName."x".$productBoxCount;
+                  $descrip = $productBoxCount < 1 ? $productCode2."_".$productName."".$productBoxCount : $descrip;
                   if(strlen($productCode2) < 1){
                      $descrip = $productName."x".$productBoxCount;
                      $descrip = $productBoxCount < 1 ? $productName."".$productBoxCount : $descrip;
