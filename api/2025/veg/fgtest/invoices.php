@@ -155,8 +155,7 @@
                      $descrip = $productBoxCount < 1 ? $productName."".$productBoxCount : $descrip;
                   }
 
-                  $subitem = str_replace(" ", "", $descrip);
-
+                  $subitem = substr(str_replace(" ", "", $descrip), 0, 31);
                   if($productCustomerId == 0) {
                      $custCategoryQuery = "SELECT CustomerCategoryName FROM CustomerCategory WHERE CustomerCategoryId = :custCategoryId";
                      $custCategoryStatement = $con_gen->prepare($custCategoryQuery);
@@ -168,7 +167,7 @@
                         $custCategoryName = $custCategoryRow[0];
                         if(strlen($custCategoryName) > 0){
                            $custCategoryName = trim($custCategoryName);
-                           $flamingoitems = 'Mini'.'-'.$custCategoryName;
+                           $flamingoitems = substr('Mini'.'-'.$custCategoryName, 0, 31);
                            $itemfullname = $flamingoitems.":".$subitem;
                         }
                      }
@@ -184,8 +183,9 @@
                      foreach($productTypeResults as $productTypeRow){
                         $productTypeName = $productTypeRow[0];
                         $productTypeName = isset($productTypeName) ? trim($productTypeName) : $productTypeName;
-                        $flamingoitems = substr($customerCode, 0, 31)." ".$productTypeName;
-                        $flamingoitems = strlen($productTypeName) < 1 ? substr($customerCode, 0, 31) : $flamingoitems;
+                        $flamingoitems = $customerCode." ".$productTypeName;
+                        $flamingoitems = strlen($productTypeName) < 1 ? $customerCode : $flamingoitems;
+                        $flamingoitems = substr($customerCode, 0, 31);
                         $itemfullname = substr($customerFullName, 0, 31).":".$flamingoitems.":".$subitem;
 
                         if(strtoupper(substr($customerCode, 0, 31)) == 'AL'){

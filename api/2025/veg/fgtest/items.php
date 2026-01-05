@@ -25,7 +25,7 @@
             $descrip = $productBoxCount < 1 ? $productName."".$productBoxCount : $descrip;
          }
 
-         $subitem = str_replace(" ", "", $descrip);
+         $subitem = substr(str_replace(" ", "", $descrip), 0, 31);
          if (strpos($subitem, ":")) {
             continue;
          }
@@ -41,7 +41,7 @@
                $custCategoryName = $custCategoryRow[0];
                if(strlen($custCategoryName) > 0){
                   $custCategoryName = trim($custCategoryName);
-                  $flamingoitems = 'Mini'.'-'.$custCategoryName;
+                  $flamingoitems = substr('Mini'.'-'.$custCategoryName, 0, 31);
                   $itemfullname = $flamingoitems.":".$subitem;
 
                   $qbItemStatement = $con_quickbooks->prepare('SELECT COUNT(*) FROM qb_itemnoninventory WHERE FullName=:FullName');
@@ -104,8 +104,9 @@
             foreach($productTypeResults as $productTypeRow){
                $productTypeName = $productTypeRow[0];
                $productTypeName = isset($productTypeName) ? trim($productTypeName) : $productTypeName;
-               $flamingoitems = substr($customerCode, 0, 31)." ".$productTypeName;
-               $flamingoitems = strlen($productTypeName) < 1 ? substr($customerCode, 0, 31) : $flamingoitems;
+               $flamingoitems = $customerCode." ".$productTypeName;
+               $flamingoitems = strlen($productTypeName) < 1 ? $customerCode : $flamingoitems;
+               $flamingoitems = substr($customerCode, 0, 31);
                if(isset($customerFullName)){
                   $customerFullName = trim($customerFullName);
                   $itemfullname = substr($customerFullName, 0, 31);
