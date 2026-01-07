@@ -91,7 +91,6 @@
             $invoicequeue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170:3306/testrosesfg');
             $invoicequeue->enqueue(QUICKBOOKS_ADD_INVOICE, $invoicelastid, 903);
 
-            $invoiceLines = array();
             $invoiceLineQuery = "SELECT InvoiceLineId, VarietyId, BoxQty, Price, StemQty, StemLength FROM InvoiceLine WHERE InvoiceHeaderId = $invoiceHeaderId"; 
             $invoiceLineStatement = $con_ho->prepare($invoiceLineQuery);
             $invoiceLineStatement->execute();
@@ -106,46 +105,83 @@
                $stemQty=$invoiceLineRow[4];
                $stemLength=$invoiceLineRow[5];
                $qnty=$stemQty;
+               
+               if($varietyId > 0){ 
+                  $productQuery = "SELECT VarietyName FROM Variety WHERE VarietyId=$varietyId";
+                  $productStatement = $con_gen->prepare($productQuery);
+                  $productStatement->execute();
+                  $productResults=$productStatement->fetchAll();
+                  foreach($productResults as $productRow){
+                     $varietyname=$productRow[0];
+                  }
 
-               if($varietyId < 1){ // mixed box
+                  $descrip = $varietyname.' - '.$stemLength;
+                  $rate=number_format($price,4);
+                  $inserInvoiceQuery = 'INSERT INTO qb_invoice_invoiceline(Invoice_TxnID, Item_FullName, Descrip, Quantity, Rate) 
+                  VALUES(:Invoice_TxnID, :Item_FullName, :Descrip, :Quantity, :Rate);';
+                  $insertInvoiceLineStatement=$con_quickbooks->prepare($inserInvoiceQuery);
+                  $insertInvoiceLineStatement->execute(array(
+                     ':Invoice_TxnID'=> $txnID,
+                     ':Item_FullName' => $item,
+                     ':Descrip' => $descrip,
+                     ':Quantity' => $qnty,
+                     ':Rate' => $rate
+                  ));
+
+                  $totalStemQty += $qnty;
+               }
+               else{// mixed box
                   $mixedBoxQuery = "SELECT InvoiceLineId, VarietyId, Price, StemQty, StemLength FROM InvoiceLineMix WHERE InvoiceLineId = $invoiceLineId"; 
                   $mixedBoxStatement = $con_ho->prepare($mixedBoxQuery);
                   $mixedBoxStatement->execute();
                   $mixedBoxResults=$mixedBoxStatement->fetchAll();
-                  foreach($mixedBoxResults as $productRow){
-                     $varietyId=$invoiceLineRow[1];
-                     $price=$invoiceLineRow[2];
-                     $mixedStemQty=$invoiceLineRow[3];
-                     $stemLength=$invoiceLineRow[4];
+                  foreach($mixedBoxResults as $mixedBoxRow){
+                     $varietyId=$mixedBoxRow[1];
+                     $price=$mixedBoxRow[2];
+                     $mixedStemQty=$mixedBoxRow[3];
+                     $stemLength=$mixedBoxRow[4];
                      $qnty = $boxQty * $mixedStemQty;
+
+                     $productQuery = "SELECT VarietyName FROM Variety WHERE VarietyId=$varietyId";
+                     $productStatement = $con_gen->prepare($productQuery);
+                     $productStatement->execute();
+                     $productResults=$productStatement->fetchAll();
+                     foreach($productResults as $productRow){
+                        $varietyname=$productRow[0];
+                     }
+
+                     $descrip = $varietyname.' - '.$stemLength;
+                     $rate=number_format($price,4);
+                     $inserInvoiceQuery = 'INSERT INTO qb_invoice_invoiceline(Invoice_TxnID, Item_FullName, Descrip, Quantity, Rate) 
+                     VALUES(:Invoice_TxnID, :Item_FullName, :Descrip, :Quantity, :Rate);';
+                     $insertInvoiceLineStatement=$con_quickbooks->prepare($inserInvoiceQuery);
+                     $insertInvoiceLineStatement->execute(array(
+                        ':Invoice_TxnID'=> $txnID,
+                        ':Item_FullName' => $item,
+                        ':Descrip' => $descrip,
+                        ':Quantity' => $qnty,
+                        ':Rate' => $rate
+                     ));
+
+                     $totalStemQty += $qnty;
                   }
                }
+            }
 
-               $productQuery = "SELECT VarietyName FROM Variety WHERE VarietyId=$varietyId";
-               $productStatement = $con_gen->prepare($productQuery);
-               $productStatement->execute();
-               $productResults=$productStatement->fetchAll();
-               foreach($productResults as $productRow){
-                  $varietyname=$productRow[0];
-               }
-
-               $totalStemQty += $qnty;
-               $descrip = $varietyname.' - '.$stemLength;
-               $rate=number_format($price,4);
-               if($documentFee!=null){
-                  $documentFeeRate=number_format($documentFee,4);
-                  array_push($invoiceLines, "('$txnID', '$item', 'Document fee', '1', '$documentFeeRate')");
-               }
-               array_push($invoiceLines, "('$txnID', '$item', '$descrip', '$qnty', '$rate')");
+            if($documentFee!=null){
+               $documentFeeRate=number_format($documentFee,4);
+               $inserInvoiceQuery = 'INSERT INTO qb_invoice_invoiceline(Invoice_TxnID, Item_FullName, Descrip, Quantity, Rate) 
+               VALUES(:Invoice_TxnID, :Item_FullName, :Descrip, :Quantity, :Rate);';
+               $insertInvoiceLineStatement=$con_quickbooks->prepare($inserInvoiceQuery);
+               $insertInvoiceLineStatement->execute(array(
+                  ':Invoice_TxnID'=> $txnID,
+                  ':Item_FullName' => $item,
+                  ':Descrip' => 'Document fee',
+                  ':Quantity' => '1',
+                  ':Rate' => $documentFeeRate
+               ));
             }
            
-            $strInvoiceLines= implode(',', $invoiceLines);
-            if($strInvoiceLines){
-               $inserInvoiceQuery = "INSERT INTO qb_invoice_invoiceline(Invoice_TxnID, Item_FullName, Descrip, Quantity, Rate) VALUES $strInvoiceLines;";
-               $insertInvoiceStatement=$con_quickbooks->prepare($inserInvoiceQuery);
-               $insertInvoiceStatement->execute();
-            }
-
             $invoiceHeaderUpdateQuery="UPDATE qb_invoice SET FOB = '$totalStemQty' WHERE TxnID = '$txnID'";
             $invoiceHeaderUpdateStatement= $con_quickbooks->prepare($invoiceHeaderUpdateQuery);
             $invoiceHeaderUpdateStatement->execute();

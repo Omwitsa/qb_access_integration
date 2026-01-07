@@ -88,7 +88,7 @@
             $insertQuickbooks = 'INSERT INTO qb_invoice(TxnID, TimeCreated, Customer_FullName, ARAccount_FullName, TxnDate, Template_FullName, RefNumber, PONumber, ShipDate, ItemSalesTax_FullName, Currency_FullName, ExchangeRate) 
             VALUES(:txnID, :timeCreated, :qbCustName, :arAcc, :invoiceDate, :template_FullName, :invoiceNo, :qBInvoiceNo, :shipDate, :itemSalesTax_FullName, :currencyName, :exchangeRate);';
             $insertQbInvoiceStatement=$con_quickbooks->prepare($insertQuickbooks);
-            $insertQbInvoiceResult=$insertQbInvoiceStatement->execute(array(
+            $insertQbInvoiceStatement->execute(array(
                ':txnID'=> $txnID,
                ':timeCreated' => $timecreated,
                ':qbCustName' => $qbCustName,
@@ -109,7 +109,6 @@
             $invoicequeue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170:3306/vegfg2025');
             $invoicequeue->enqueue(QUICKBOOKS_ADD_INVOICE, $invoicelastid, 903);
 
-            $invoiceLines = array();
             $invoiceLineQuery = "SELECT InvoiceLineId, ProductId, BoxCount, BoxQty, Price, LineValue, LabFL, LabBL, LabPL, CustomerBranchId FROM InvoiceLine WHERE InvoiceHeaderId = $invoiceHeaderId"; 
             $invoiceLineStatement = $con_ho->prepare($invoiceLineQuery);
             $invoiceLineStatement->execute();
@@ -197,19 +196,29 @@
                
                $lineWeight = $netweightkg * $boxCount * $quantity;
                $other1 = $lineWeight.'Kgs net'; 
-               array_push($invoiceLines, "('$txnID', '$itemfullname', '$subitem', '$quantity', '$rate', '$amount', '$taxName', '$other1')");
+
+               if(date('Y', strtotime($timecreated)) === "2026"){
+                  $itemfullname = "VEGETABLES";
+               }
+
+               $inserInvoiceQuery = 'INSERT INTO qb_invoice_invoiceline(Invoice_TxnID, Item_FullName, Descrip, Quantity, Rate, Amount, SalesTaxCode_FullName, Other1) 
+               VALUES(:Invoice_TxnID, :Item_FullName, :Descrip, :Quantity, :Rate, :Amount, :SalesTaxCode_FullName, :Other1);';
+               $insertInvoiceLineStatement=$con_quickbooks->prepare($inserInvoiceQuery);
+               $insertInvoiceLineStatement->execute(array(
+                  ':Invoice_TxnID'=> $txnID,
+                  ':Item_FullName' => $itemfullname,
+                  ':Descrip' => $subitem,
+                  ':Quantity' => $quantity,
+                  ':Rate' => $rate,
+                  ':Amount' => $amount,
+                  ':SalesTaxCode_FullName' => $taxName,
+                  ':Other1' => $other1
+               ));
 
                $totalCartons += $quantity;
                $totalWeight += $lineWeight;
             }
             
-            $strInvoiceLines= implode(',', $invoiceLines);
-            if(isset($strInvoiceLines)){
-               $inserInvoiceQuery = "INSERT INTO qb_invoice_invoiceline(Invoice_TxnID, Item_FullName, Descrip, Quantity, Rate, Amount, SalesTaxCode_FullName, Other1) VALUES $strInvoiceLines;";
-               $insertInvoiceStatement=$con_quickbooks->prepare($inserInvoiceQuery);
-               $insertInvoiceStatement->execute();
-            }
-
             $invoiceHeaderUpdateQuery="UPDATE qb_invoice SET FOB = '$totalCartons Cartons', Other = '$totalWeight Kgs net' WHERE TxnID = '$txnID'";
             $invoiceHeaderUpdateStatement= $con_ho->prepare($invoiceHeaderUpdateQuery);
             $invoiceHeaderUpdateStatement->execute();
