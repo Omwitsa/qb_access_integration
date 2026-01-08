@@ -141,7 +141,7 @@
       $unsynchedCountQuery = "SELECT COUNT(*) FROM CreditNote WHERE ExporterId = 2 AND QBTransferStatus = 0 AND CreditNoteDate Between #7/12/2025# And #12/31/2026#";
       $unsynchedCountStatement = $con_ho->prepare($unsynchedCountQuery);
       $unsynchedCountStatement->execute();
-      $unsynchedInvoiceCount = $unsynchedCountStatement->fetchColumn();
+      $unsynchedCount = $unsynchedCountStatement->fetchColumn();
       $results["unsynchedCount"] = $unsynchedCount;
 
       $output = new stdClass();
