@@ -33,17 +33,23 @@
          $qbInvoiceRows = $qbInvoiceStatement->rowCount();
 
          if($qbInvoiceRows > 0){
-            $updateInvoiceQuery="UPDATE InvoiceHeader SET QBTransferStatus=1 WHERE InvoiceHeaderId=$invoiceHeaderId";
+            $updateInvoiceQuery="UPDATE InvoiceHeader SET QBTransferStatus = :QBTransferStatus WHERE InvoiceHeaderId = :invoiceHeaderId";
             $updateInvoiceStatement=$con_ho->prepare($updateInvoiceQuery);
-            $updateInvoiceStatement->execute();
+            $updateInvoiceStatement->execute(array(
+               ':invoiceHeaderId'=> $invoiceHeaderId,
+               ':QBTransferStatus'=> 1
+            ));
+
             continue;
          }
 
          $currency = "";
          $qbCustName = "";
-         $customerQuery = "SELECT ClientName, Country, ClientCode, CurrencyCode, QBCustomerNameAAA FROM Client WHERE ClientId = $custId";
+         $customerQuery = "SELECT ClientName, Country, ClientCode, CurrencyCode, QBCustomerNameAAA FROM Client WHERE ClientId = :custId";
          $customerStatement = $con_gen->prepare($customerQuery);
-         $customerStatement->execute();
+         $customerStatement->execute(array(
+            ':custId'=> $custId
+         ));
          $customerResults=$customerStatement->fetchAll();
          foreach($customerResults as $customerRow){
             // $custCountryId = $customerRow[1];
@@ -92,11 +98,12 @@
             $invoicequeue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170:3306/rosesaaa2025');
             $invoicequeue->enqueue(QUICKBOOKS_ADD_INVOICE, $invoicelastid, 903);
 
-            $invoiceLineQuery = "SELECT InvoiceLineId, VarietyId, BoxQty, Price, StemQty, StemLength FROM InvoiceLine WHERE InvoiceHeaderId = $invoiceHeaderId"; 
+            $invoiceLineQuery = "SELECT InvoiceLineId, VarietyId, BoxQty, Price, StemQty, StemLength FROM InvoiceLine WHERE InvoiceHeaderId = :invoiceHeaderId"; 
             $invoiceLineStatement = $con_ho->prepare($invoiceLineQuery);
-            $invoiceLineStatement->execute();
+            $invoiceLineStatement->execute(array(
+               ':invoiceHeaderId'=> $invoiceHeaderId
+            ));
             $invoiceLineResults=$invoiceLineStatement->fetchAll();
-
             $totalStemQty = 0;
             foreach($invoiceLineResults as $invoiceLineRow){
                $invoiceLineId=$invoiceLineRow[0];
@@ -108,9 +115,11 @@
                $qnty=$stemQty;
 
                if($varietyId > 0){ 
-                  $productQuery = "SELECT VarietyName FROM Variety WHERE VarietyId=$varietyId";
+                  $productQuery = "SELECT VarietyName FROM Variety WHERE VarietyId = :varietyId";
                   $productStatement = $con_gen->prepare($productQuery);
-                  $productStatement->execute();
+                  $productStatement->execute(array(
+                     ':varietyId'=> $varietyId
+                  ));
                   $productResults=$productStatement->fetchAll();
                   foreach($productResults as $productRow){
                      $varietyname=$productRow[0];
@@ -132,9 +141,11 @@
                   $totalStemQty += $qnty;
                }
                else{// mixed box
-                  $mixedBoxQuery = "SELECT InvoiceLineId, VarietyId, Price, StemQty, StemLength FROM InvoiceLineMix WHERE InvoiceLineId = $invoiceLineId"; 
+                  $mixedBoxQuery = "SELECT InvoiceLineId, VarietyId, Price, StemQty, StemLength FROM InvoiceLineMix WHERE InvoiceLineId = :invoiceLineId"; 
                   $mixedBoxStatement = $con_ho->prepare($mixedBoxQuery);
-                  $mixedBoxStatement->execute();
+                  $mixedBoxStatement->execute(array(
+                     ':invoiceLineId'=> $invoiceLineId
+                  ));
                   $mixedBoxResults=$mixedBoxStatement->fetchAll();
                   foreach($mixedBoxResults as $mixedBoxRow){
                      $varietyId=$mixedBoxRow[1];
@@ -143,9 +154,11 @@
                      $stemLength=$mixedBoxRow[4];
                      $qnty = $boxQty * $mixedStemQty;
 
-                     $productQuery = "SELECT VarietyName FROM Variety WHERE VarietyId=$varietyId";
+                     $productQuery = "SELECT VarietyName FROM Variety WHERE VarietyId = :varietyId";
                      $productStatement = $con_gen->prepare($productQuery);
-                     $productStatement->execute();
+                     $productStatement->execute(array(
+                        ':varietyId'=> $varietyId
+                     ));
                      $productResults=$productStatement->fetchAll();
                      foreach($productResults as $productRow){
                         $varietyname=$productRow[0];
@@ -183,13 +196,19 @@
                ));
             }
            
-            $invoiceHeaderUpdateQuery="UPDATE qb_invoice SET FOB = '$totalStemQty' WHERE TxnID = '$txnID'";
+            $invoiceHeaderUpdateQuery="UPDATE qb_invoice SET FOB = :FOB WHERE TxnID = :txnID";
             $invoiceHeaderUpdateStatement= $con_quickbooks->prepare($invoiceHeaderUpdateQuery);
-            $invoiceHeaderUpdateStatement->execute();
+            $invoiceHeaderUpdateStatement->execute(array(
+               ':txnID'=> $txnID,
+               ':FOB'=> $totalStemQty
+            ));
 
-            $invoiceQbStatusUpdate="UPDATE InvoiceHeader SET QBTransferStatus = 1 WHERE InvoiceHeaderId = $invoiceHeaderId;";
+            $invoiceQbStatusUpdate="UPDATE InvoiceHeader SET QBTransferStatus = :QBTransferStatus WHERE InvoiceHeaderId = :invoiceHeaderId;";
             $invoiceQbStatusUpdateStatement= $con_ho->prepare($invoiceQbStatusUpdate);
-            $invoiceQbStatusUpdateStatement->execute();
+            $invoiceQbStatusUpdateStatement->execute(array(
+               ':invoiceHeaderId'=> $invoiceHeaderId,
+               ':QBTransferStatus'=> 1
+            ));
          }
       }
 

@@ -33,10 +33,11 @@
          ));
          $qbInvoiceRows = $qbInvoiceStatement->rowCount();
          if($qbInvoiceRows > 0){
-            $updateInvoiceQuery="UPDATE InvoiceHeader SET QBTransferStatus=1 WHERE InvoiceHeaderId = :InvoiceHeaderId";
+            $updateInvoiceQuery="UPDATE InvoiceHeader SET QBTransferStatus = :QBTransferStatus WHERE InvoiceHeaderId = :InvoiceHeaderId";
             $updateInvoiceStatement=$con_ho->prepare($updateInvoiceQuery);
             $updateInvoiceStatement->execute(array(
-               ':InvoiceHeaderId'=> $invoiceHeaderId
+               ':InvoiceHeaderId'=> $invoiceHeaderId,
+               ':QBTransferStatus'=> 1
             ));
 
             continue;
@@ -109,9 +110,11 @@
             $invoicequeue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170:3306/testvegfg2025');
             $invoicequeue->enqueue(QUICKBOOKS_ADD_INVOICE, $invoicelastid, 903);
 
-            $invoiceLineQuery = "SELECT InvoiceLineId, ProductId, BoxCount, BoxQty, Price, LineValue, LabFL, LabBL, LabPL, CustomerBranchId FROM InvoiceLine WHERE InvoiceHeaderId = $invoiceHeaderId"; 
+            $invoiceLineQuery = "SELECT InvoiceLineId, ProductId, BoxCount, BoxQty, Price, LineValue, LabFL, LabBL, LabPL, CustomerBranchId FROM InvoiceLine WHERE InvoiceHeaderId = :invoiceHeaderId"; 
             $invoiceLineStatement = $con_ho->prepare($invoiceLineQuery);
-            $invoiceLineStatement->execute();
+            $invoiceLineStatement->execute(array(
+               ':invoiceHeaderId'=> $invoiceHeaderId
+            ));
             $invoiceLineResults=$invoiceLineStatement->fetchAll();
             $totalCartons = 0;
             $totalWeight = 0;
@@ -132,9 +135,11 @@
                $labels = strtoupper($qbCustName) == strtoupper($flamingoproducelimited) ? $labFL.$labBL.$labPL : null;
                insertItem($productId,$con_gen, $con_quickbooks, $timecreated);
                
-               $productQuery = "SELECT ProductId, ProductCode, ProductName, ProductCode2, ProductTypeId, CustomerId, NetPackWtKg, BoxCount, Price, ClientCategoryId FROM Product WHERE ProductId = $productId";
+               $productQuery = "SELECT ProductId, ProductCode, ProductName, ProductCode2, ProductTypeId, CustomerId, NetPackWtKg, BoxCount, Price, ClientCategoryId FROM Product WHERE ProductId = :productId";
                $productStatement = $con_gen->prepare($productQuery);
-               $productStatement->execute();
+               $productStatement->execute(array(
+                  ':productId'=> $productId
+               ));
                $productResults=$productStatement->fetchAll();
                foreach($productResults as $productRow){
                   $productCode = $productRow[1];
@@ -219,13 +224,20 @@
                $totalWeight += $lineWeight;
             }
             
-            $invoiceHeaderUpdateQuery="UPDATE qb_invoice SET FOB = '$totalCartons Cartons', Other = '$totalWeight Kgs net' WHERE TxnID = '$txnID'";
+            $invoiceHeaderUpdateQuery="UPDATE qb_invoice SET FOB = :FOB, Other = :Other WHERE TxnID = :txnID";
             $invoiceHeaderUpdateStatement= $con_ho->prepare($invoiceHeaderUpdateQuery);
-            $invoiceHeaderUpdateStatement->execute();
+            $invoiceHeaderUpdateStatement->execute(array(
+               ':FOB'=> "$totalCartons Cartons",
+               ':Other'=> "$totalWeight Kgs net",
+               ':txnID'=> $txnID
+            ));
 
-            $invoiceQbStatusUpdate="UPDATE InvoiceHeader SET QBTransferStatus = 1 WHERE InvoiceHeaderId = $invoiceHeaderId;";
-            $invoiceQbStatusUpdateStatement= $con_ho->prepare($invoiceQbStatusUpdate);
-            $invoiceQbStatusUpdateStatement->execute();
+            $updateInvoiceQuery="UPDATE InvoiceHeader SET QBTransferStatus = :QBTransferStatus WHERE InvoiceHeaderId = :InvoiceHeaderId";
+            $updateInvoiceStatement=$con_ho->prepare($updateInvoiceQuery);
+            $updateInvoiceStatement->execute(array(
+               ':InvoiceHeaderId'=> $invoiceHeaderId,
+               ':QBTransferStatus'=> 1
+            ));
          }
       }
 

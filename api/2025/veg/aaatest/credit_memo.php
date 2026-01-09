@@ -18,33 +18,40 @@
          $amount = $creditNoteRow[3];
          $custId = $creditNoteRow[4];
 
-         $claimHeaderQuery = "SELECT ClaimHeaderId, ReferenceNo, InvoiceHeaderId FROM ClaimHeader WHERE CreditNoteId = $creditNoteId";
+         $claimHeaderQuery = "SELECT ClaimHeaderId, ReferenceNo, InvoiceHeaderId FROM ClaimHeader WHERE CreditNoteId = :creditNoteId";
          $claimHeaderStatement = $con_ho->prepare($claimHeaderQuery);
-         $claimHeaderStatement->execute();
+         $claimHeaderStatement->execute(array(
+            ':creditNoteId'=> $creditNoteId
+         ));
          $claimHeaderResults=$claimHeaderStatement->fetchAll();
          foreach($claimHeaderResults as $claimHeaderRow){
             $claimHeaderId = $claimHeaderRow[0];
          }
          
          $refNo = $creditNoteNo;
-         $qbIdQuery = "SELECT RefNumber FROM qb_creditmemo WHERE RefNumber = '$refNo';";
+         $qbIdQuery = "SELECT RefNumber FROM qb_creditmemo WHERE RefNumber = :refNo;";
          $qbIdStatement = $con_quickbooks->prepare($qbIdQuery);
-         $qbIdStatement->execute();
+         $qbIdStatement->execute(array(
+            ':refNo'=> $refNo
+         ));
          $qbIdRows = $qbIdStatement->rowCount();
          if($qbIdRows > 0){
-            $query="UPDATE CreditNote SET QBTransferStatus=1 WHERE CreditNoteId = :creditNoteId";
+            $query="UPDATE CreditNote SET QBTransferStatus = :QBTransferStatus WHERE CreditNoteId = :creditNoteId";
             $updateStatement=$con_ho->prepare($query);
             $updateStatement->execute(array(
-               ':creditNoteId'=> $creditNoteId
+               ':creditNoteId'=> $creditNoteId,
+               ':QBTransferStatus'=> 1
             ));
 
             continue;
          }
 
          $qbCustName = "";
-         $customerQuery = "SELECT CustomerName, CountryId, CustomerCode, CustomerFullName, CurrencyCode, QBCustomerNameAAA, FinalInvoiceType FROM Customer WHERE CustomerId = $custId";
+         $customerQuery = "SELECT CustomerName, CountryId, CustomerCode, CustomerFullName, CurrencyCode, QBCustomerNameAAA, FinalInvoiceType FROM Customer WHERE CustomerId = :custId";
          $customerStatement = $con_gen->prepare($customerQuery);
-         $customerStatement->execute();
+         $customerStatement->execute(array(
+            ':custId'=> $custId
+         ));
          $customerResults=$customerStatement->fetchAll();
          foreach($customerResults as $customerRow){
             $custCountryId = $customerRow[1];
@@ -56,9 +63,11 @@
          $itemtax = $custCountryId === 7 ? 'Z' : 'E';
          if(!empty($qbCustName)){
             $insertQbCreditNotes = "INSERT INTO qb_creditmemo(TxnID, TimeCreated, Customer_FullName, ARAccount_FullName, Template_FullName, TxnDate, RefNumber, DueDate, ShipDate, Subtotal, ItemSalesTax_FullName, TotalAmount, CreditRemaining, CustomerSalesTaxCode_FullName) 
-            VALUES('$txnID', NOW(), '$qbCustName', '$arAcc', 'Custom Credit Memo', '$creditNoteDate', '$refNo', '$creditNoteDate', '$creditNoteDate', $amount, '$itemtax', $amount, $amount, '$taxName');";
+            VALUES(:txnID, :TimeCreated, :qbCustName, :arAcc, :template, :date, :refNo, :DueDate, :ShipDate, :Subtotal, :ItemSalesTax_FullName, :TotalAmount, :CreditRemaining, :CustomerSalesTaxCode_FullName);";
             $insertQbCreditNoteStatement=$con_quickbooks->prepare($insertQbCreditNotes);
-            $insertQbCreditNoteResult=$insertQbCreditNoteStatement->execute();
+            $insertQbCreditNoteResult=$insertQbCreditNoteStatement->execute(array(':txnID' => $txnID, ':TimeCreated' => $timecreated, ':qbCustName' => $qbCustName, ':arAcc' => $arAcc,
+            ':template' => 'Custom Credit Memo', ':date' => $creditNoteDate, ':refNo' => $refNo, ':DueDate' => $creditNoteDate, ':ShipDate' => $creditNoteDate, ':Subtotal' => $amount,
+            ':ItemSalesTax_FullName' => $itemtax, ':TotalAmount' => $amount, ':CreditRemaining' => $amount, ':CustomerSalesTaxCode_FullName' => $taxName));
 
             $creditNotelastid = $con_quickbooks->lastInsertId();
             // $dbConnectionString = "$mysql_username:$mysql_password@$mysql_servername:$mysql_port/$mysql_dbname";
@@ -66,10 +75,11 @@
             $creditNotequeue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170:3306/testvegaaa2025');
             $creditNotequeue->enqueue(QUICKBOOKS_ADD_CREDITMEMO, $creditNotelastid, 903);
 
-            $creditNoteLines = array();
-            $claimLineQuery = "SELECT ProductId, QtyClaim, PriceInvoice, LineValueClaim FROM ClaimLine WHERE ClaimHeaderId = $claimHeaderId";
+            $claimLineQuery = "SELECT ProductId, QtyClaim, PriceInvoice, LineValueClaim FROM ClaimLine WHERE ClaimHeaderId = :claimHeaderId";
             $claimLineStatement = $con_ho->prepare($claimLineQuery);
-            $claimLineStatement->execute();
+            $claimLineStatement->execute(array(
+               ':claimHeaderId'=> $claimHeaderId
+            ));
             $claimLineResults=$claimLineStatement->fetchAll();
             foreach($claimLineResults as $claimLineRow){
                $productId=$claimLineRow[0] ? $claimLineRow[0] : 0;
@@ -78,9 +88,11 @@
                $lineAmount=$claimLineRow[3];
 
                $custCategoryId = 0;
-               $productQuery = "SELECT ProductId, ProductCode, ProductName, ProductCode2, ProductTypeId, CustomerId, NetPackWtKg, BoxCount, Price, ClientCategoryId FROM Product WHERE ProductId = $productId";
+               $productQuery = "SELECT ProductId, ProductCode, ProductName, ProductCode2, ProductTypeId, CustomerId, NetPackWtKg, BoxCount, Price, ClientCategoryId FROM Product WHERE ProductId = :productId";
                $productStatement = $con_gen->prepare($productQuery);
-               $productStatement->execute();
+               $productStatement->execute(array(
+                  ':productId'=> $productId
+               ));
                $productResults=$productStatement->fetchAll();
                foreach($productResults as $productRow){
                   $descrip=$productRow[2]."".$productRow[7]; // Credit Notes, Credit note flowers
@@ -90,19 +102,19 @@
                }
 
                $itemfullname = "Veggetables"; // Flowers, Roses
-               array_push($creditNoteLines, "('$txnID', '$itemfullname', '$descrip', $quantity, $rate, $lineAmount, '$taxName')");
-            }
-
-            $strCreditNoteLines = implode(',', $creditNoteLines);
-            if($strCreditNoteLines){
-               $insertCreditNoteQuery = "INSERT INTO qb_creditmemo_creditmemoline(CreditMemo_TxnID, Item_FullName, Descrip, Quantity, Rate, Amount, SalesTaxCode_FullName) VALUES $strCreditNoteLines;";
+               $insertCreditNoteQuery = "INSERT INTO qb_creditmemo_creditmemoline(CreditMemo_TxnID, Item_FullName, Descrip, Quantity, Rate, Amount, SalesTaxCode_FullName) 
+               VALUES(:txnID, :itemfullname, :descrip, :quantity, :rate, :Amount, :taxName);";
                $insertCreditNoteStatement=$con_quickbooks->prepare($insertCreditNoteQuery);
-               $insertCreditNoteStatement->execute();
+               $insertCreditNoteStatement->execute(array(':txnID' => $txnID, ':itemfullname' => $itemfullname, ':descrip' => $descrip, ':quantity' => $quantity,
+               ':rate' => $rate, ':Amount' => $lineAmount, ':taxName' => $taxName));
             }
 
-            $paymentQbStatusUpdate="UPDATE CreditNote SET QBTransferStatus = 1 WHERE CreditNoteId = $creditNoteId;";
-            $paymentQbStatusUpdateStatement= $con_ho->prepare($paymentQbStatusUpdate);
-            $paymentQbStatusUpdateStatement->execute();
+            $query="UPDATE CreditNote SET QBTransferStatus = :QBTransferStatus WHERE CreditNoteId = :creditNoteId";
+            $updateStatement=$con_ho->prepare($query);
+            $updateStatement->execute(array(
+               ':creditNoteId'=> $creditNoteId,
+               ':QBTransferStatus'=> 1
+            ));
          }
       }
 

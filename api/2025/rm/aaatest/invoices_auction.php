@@ -31,17 +31,23 @@
          $qbInvoiceRows = $qbInvoiceStatement->rowCount();
 
          if($qbInvoiceRows > 0){
-            $updateInvoiceQuery="UPDATE AuctionInvoiceHeader SET QBTransferStatus=1 WHERE AuctionInvoiceHeaderId=$invoiceHeaderId";
+            $updateInvoiceQuery="UPDATE AuctionInvoiceHeader SET QBTransferStatus = :QBTransferStatus WHERE AuctionInvoiceHeaderId = :invoiceHeaderId";
             $updateInvoiceStatement=$con_ho->prepare($updateInvoiceQuery);
-            $updateInvoiceStatement->execute();
+            $updateInvoiceStatement->execute(array(
+               ':invoiceHeaderId'=> $invoiceHeaderId,
+               ':QBTransferStatus'=> 1
+            ));
+
             continue;
          }
 
          $currency = "";
          $qbCustName = "";
-         $customerQuery = "SELECT ClientName, Country, ClientCode, CurrencyCode, QBCustomerNameAAA FROM Client WHERE ClientId = $custId";
+         $customerQuery = "SELECT ClientName, Country, ClientCode, CurrencyCode, QBCustomerNameAAA FROM Client WHERE ClientId = :custId";
          $customerStatement = $con_gen->prepare($customerQuery);
-         $customerStatement->execute();
+         $customerStatement->execute(array(
+            ':custId'=> $custId
+         ));
          $customerResults=$customerStatement->fetchAll();
          foreach($customerResults as $customerRow){
             // $custCountryId = $customerRow[1];
@@ -68,9 +74,11 @@
             }
          }
 
-         $auctionQuery = "SELECT AuctionName FROM Auction  WHERE AuctionId = $auctionId";
+         $auctionQuery = "SELECT AuctionName FROM Auction  WHERE AuctionId = :auctionId";
          $auctionStatement = $con_ho->prepare($auctionQuery);
-         $auctionStatement->execute();
+         $auctionStatement->execute(array(
+            ':auctionId'=> $auctionId
+         ));
          $auctionResult = $auctionStatement->fetch();
          $auctionName = $auctionResult['AuctionName'];
 
@@ -97,7 +105,6 @@
             $invoicequeue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170:3306/testrosesaaa');
             $invoicequeue->enqueue(QUICKBOOKS_ADD_INVOICE, $invoicelastid, 903);
 
-            $invoiceLines = array();
             // $invoiceLineQuery = "SELECT InvoiceLineId, VarietyId, BoxQty, Price, StemQty, StemLength FROM InvoiceLine WHERE InvoiceHeaderId = $invoiceHeaderId"; 
             $invoiceLineQuery = "SELECT AuctionWeekNo, AuctionId, VarietyId, StemLength, StemQty, Turnover, ExporterId FROM AuctionSales WHERE AuctionWeekNo=:AuctionWeekNo AND AuctionId=:AuctionId AND ExporterId=:ExporterId"; 
             $invoiceLineStatement = $con_ho->prepare($invoiceLineQuery);
@@ -127,24 +134,32 @@
                $descrip = $varietyName.' - '.$stemLength;
                $rate=number_format($turnover/$stemQty,3);
                $totalStemQty += $qnty;
-               
-               array_push($invoiceLines, "('$txnID', '$item', '$descrip', '$qnty', '$rate')");
+
+               $inserInvoiceQuery = 'INSERT INTO qb_invoice_invoiceline(Invoice_TxnID, Item_FullName, Descrip, Quantity, Rate) 
+               VALUES(:Invoice_TxnID, :Item_FullName, :Descrip, :Quantity, :Rate);';
+               $insertInvoiceLineStatement=$con_quickbooks->prepare($inserInvoiceQuery);
+               $insertInvoiceLineStatement->execute(array(
+                  ':Invoice_TxnID'=> $txnID,
+                  ':Item_FullName' => $item,
+                  ':Descrip' => $descrip,
+                  ':Quantity' => $qnty,
+                  ':Rate' => $rate
+               ));
             }
 
-            $strInvoiceLines= implode(',', $invoiceLines);
-            if($strInvoiceLines){
-               $inserInvoiceQuery = "INSERT INTO qb_invoice_invoiceline(Invoice_TxnID, Item_FullName, Descrip, Quantity, Rate) VALUES $strInvoiceLines;";
-               $insertInvoiceStatement=$con_quickbooks->prepare($inserInvoiceQuery);
-               $insertInvoiceStatement->execute();
-            }
-
-            $invoiceHeaderUpdateQuery="UPDATE qb_invoice SET FOB = '$totalStemQty' WHERE TxnID = '$txnID'";
+            $invoiceHeaderUpdateQuery="UPDATE qb_invoice SET FOB = :FOB WHERE TxnID = :txnID";
             $invoiceHeaderUpdateStatement= $con_quickbooks->prepare($invoiceHeaderUpdateQuery);
-            $invoiceHeaderUpdateStatement->execute();
+            $invoiceHeaderUpdateStatement->execute(array(
+               ':txnID'=> $txnID,
+               ':FOB'=> $totalStemQty
+            ));
 
-            $updateInvoiceQuery="UPDATE AuctionInvoiceHeader SET QBTransferStatus=1 WHERE AuctionInvoiceHeaderId=$invoiceHeaderId";
+            $updateInvoiceQuery="UPDATE AuctionInvoiceHeader SET QBTransferStatus = :QBTransferStatus WHERE AuctionInvoiceHeaderId = :invoiceHeaderId";
             $updateInvoiceStatement=$con_ho->prepare($updateInvoiceQuery);
-            $updateInvoiceStatement->execute();
+            $updateInvoiceStatement->execute(array(
+               ':invoiceHeaderId'=> $invoiceHeaderId,
+               ':QBTransferStatus'=> 1
+            ));
          }
       }
 

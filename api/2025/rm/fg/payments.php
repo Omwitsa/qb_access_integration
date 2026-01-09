@@ -22,33 +22,40 @@
             continue;
          }
 
-         $qbPaymentQuery = "SELECT RefNumber FROM qb_receivepayment WHERE RefNumber = '$paymentId';";
+         $qbPaymentQuery = "SELECT RefNumber FROM qb_receivepayment WHERE RefNumber = :paymentId;";
          $qbPaymentStatement = $con_quickbooks->prepare($qbPaymentQuery);
-         $qbPaymentStatement->execute();
+         $qbPaymentStatement->execute(array(
+            ':paymentId'=> $paymentId
+         ));
          $qbPaymentRows = $qbPaymentStatement->rowCount();
          if($qbPaymentRows > 0){
-            $query="UPDATE CustomerPayment SET QBTransferStatus=1 WHERE CustomerPaymentId = :paymentId";
+            $query="UPDATE CustomerPayment SET QBTransferStatus = :QBTransferStatus WHERE CustomerPaymentId = :paymentId";
             $updateStatement=$con_ho->prepare($query);
             $updateStatement->execute(array(
-               ':paymentId'=> $paymentId
+               ':paymentId'=> $paymentId,
+               ':QBTransferStatus'=> 1
             ));
 
             continue;
          }
 
          $accDepositedTo = "";
-         $bankQuery = "SELECT QBBankName FROM Bank WHERE BankId = $bankId";
+         $bankQuery = "SELECT QBBankName FROM Bank WHERE BankId = :bankId";
          $bankStatement = $con_ho->prepare($bankQuery);
-         $bankStatement->execute();
+         $bankStatement->execute(array(
+            ':bankId'=> $bankId
+         ));
          $bankResults=$bankStatement->fetchAll();
          foreach($bankResults as $bankRow){
             $accDepositedTo = $bankRow[0];
          }
          
          $qbCustName = "";
-         $customerQuery = "SELECT ClientName, Country, ClientCode, CurrencyCode, QBCustomerName FROM Client WHERE ExporterId = 25 AND ClientId = $custId";
+         $customerQuery = "SELECT ClientName, Country, ClientCode, CurrencyCode, QBCustomerName FROM Client WHERE ClientId = :custId";
          $customerStatement = $con_gen->prepare($customerQuery);
-         $customerStatement->execute();
+         $customerStatement->execute(array(
+            ':custId'=> $custId
+         ));
          $customerResults=$customerStatement->fetchAll();
          foreach($customerResults as $customerRow){
             $currency = $customerRow[3];
@@ -58,9 +65,10 @@
 
          if(!empty($qbCustName)){
             $insertQbPayments = "INSERT INTO qb_receivepayment (TxnID, TimeCreated, Customer_FullName, ARAccount_FullName, TxnDate, RefNumber, TotalAmount, Memo, DepositToAccount_FullName) 
-            VALUES('$txnID', NOW(),'$qbCustName','$arAcc', '$paymentDate', '$paymentId', $amount, '$memo', '$accDepositedTo');";
+            VALUES(:txnID, :TimeCreated, :qbCustName, :arAcc, :paymentDate, :refNumber, :amount, :memo, :accDepositedTo);";
             $insertQbPaymentStatement=$con_quickbooks->prepare($insertQbPayments);
-            $insertQbPaymentResult=$insertQbPaymentStatement->execute();
+            $insertQbPaymentResult=$insertQbPaymentStatement->execute(array(':txnID' => $txnID, ':TimeCreated' => $timecreated, ':qbCustName' => $qbCustName, ':arAcc' => $arAcc,
+            ':paymentDate' => $paymentDate, ':refNumber' => $paymentId, ':amount' => $amount, ':memo' => $memo, ':accDepositedTo' => $accDepositedTo));
 
             $paymentlastid = $con_quickbooks->lastInsertId();
             // $dbConnectionString = "$mysql_username:$mysql_password@$mysql_servername:$mysql_port/$mysql_dbname";
@@ -68,45 +76,50 @@
             $paymentqueue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170:3306/rosesfg2025');
             $paymentqueue->enqueue(QUICKBOOKS_ADD_RECEIVEPAYMENT, $paymentlastid, 903);
 
-            $paymentLines = array();
-            $custPayLineQuery = "SELECT InvoiceHeaderId, Amount FROM CustomerPaymentLine WHERE CustomerPaymentId = $txnID";
+            $custPayLineQuery = "SELECT InvoiceHeaderId, Amount FROM CustomerPaymentLine WHERE CustomerPaymentId = :txnID";
             $custPayLineStatement = $con_ho->prepare($custPayLineQuery);
-            $custPayLineStatement->execute();
+            $custPayLineStatement->execute(array(
+               ':txnID'=> $txnID
+            ));
             $custPayLineResults=$custPayLineStatement->fetchAll();
 
             foreach($custPayLineResults as $custPayLineRow){
                $invoiceHeaderId = $custPayLineRow[0];
                $lineAmount = $custPayLineRow[1];
 
-               $invoiceHeaderQuery = "SELECT InvoiceNo FROM  InvoiceHeader WHERE InvoiceHeaderId = $invoiceHeaderId";
+               $invoiceHeaderQuery = "SELECT InvoiceNo FROM  InvoiceHeader WHERE InvoiceHeaderId = :invoiceHeaderId";
                $invoiceHeaderStatement = $con_ho->prepare($invoiceHeaderQuery);
-               $invoiceHeaderStatement->execute();
+               $invoiceHeaderStatement->execute(array(
+                  ':invoiceHeaderId'=> $invoiceHeaderId
+               ));
                $invoiceHeaderResults=$invoiceHeaderStatement->fetchAll();
                foreach($invoiceHeaderResults as $invoiceHeaderRow){
                   $invoiceNo = $invoiceHeaderRow[0];
                }
 
-               $qbInvoiceQuery = "SELECT TxnID FROM qb_invoice WHERE RefNumber = '$invoiceNo';";
+               $qbInvoiceQuery = "SELECT TxnID FROM qb_invoice WHERE RefNumber = :invoiceNo;";
                $qbInvoiceStatement = $con_quickbooks->prepare($qbInvoiceQuery);
-               $qbInvoiceStatement->execute();
+               $qbInvoiceStatement->execute(array(
+                  ':invoiceNo'=> $invoiceNo
+               ));
                $qbInvoiceResults=$qbInvoiceStatement->fetchAll();
                foreach($qbInvoiceResults as $qbInvoiceRow){
                   $toTxnID = $qbInvoiceRow[0];
                }
 
-               array_push($paymentLines, "('$txnID', '$txnID', '$toTxnID', 'Invoice', '$paymentDate', '$invoiceNo', 0, $lineAmount)");
-            }
-
-            $strPaymentLines = implode(',', $paymentLines);
-            if($strPaymentLines){
-               $inserPaymentQuery = "INSERT INTO qb_receivepayment_appliedtotxn (FromTxnID, ReceivePayment_TxnID, ToTxnID, TxnType, TxnDate, RefNumber, BalanceRemaining, Amount) VALUES $strPaymentLines;";
+               $inserPaymentQuery = "INSERT INTO qb_receivepayment_appliedtotxn (FromTxnID, ReceivePayment_TxnID, ToTxnID, TxnType, TxnDate, RefNumber, BalanceRemaining, Amount) 
+               VALUES(:FromTxnID, :ReceivePayment_TxnID, :ToTxnID, :type, :paymentDate, :invoiceNo,:BalanceRemaining, :Amount);";
                $inserPaymentStatement=$con_quickbooks->prepare($inserPaymentQuery);
-               $inserPaymentStatement->execute();
+               $inserPaymentStatement->execute(array(':FromTxnID' => $txnID, ':ReceivePayment_TxnID' => $txnID, ':ToTxnID' => $toTxnID, 
+               ':type' => "Invoice", ':paymentDate' => $paymentDate, ':invoiceNo' => $invoiceNo,':BalanceRemaining' => 0, ':Amount' => $lineAmount));
             }
 
-            $paymentQbStatusUpdate="UPDATE CustomerPayment SET QBTransferStatus = 1 WHERE CustomerPaymentId = $paymentId;";
-            $paymentQbStatusUpdateStatement= $con_ho->prepare($paymentQbStatusUpdate);
-            $paymentQbStatusUpdateStatement->execute();
+            $query="UPDATE CustomerPayment SET QBTransferStatus = :QBTransferStatus WHERE CustomerPaymentId = :paymentId";
+            $updateStatement=$con_ho->prepare($query);
+            $updateStatement->execute(array(
+               ':paymentId'=> $paymentId,
+               ':QBTransferStatus'=> 1
+            ));
          }
       }
 

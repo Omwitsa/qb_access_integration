@@ -23,9 +23,11 @@
          $clearingAgentId = $billRow[9];
          $ref = $billRow[10];
 
-         $qbBillsQuery = "SELECT RefNumber  FROM qb_bill WHERE RefNumber = '$agentInvoiceNo'";
+         $qbBillsQuery = "SELECT RefNumber  FROM qb_bill WHERE RefNumber = :agentInvoiceNo";
          $qbBillStatement = $con_quickbooks->prepare($qbBillsQuery);
-         $qbBillStatement->execute();
+         $qbBillStatement->execute(array(
+            ':agentInvoiceNo'=> $agentInvoiceNo
+         ));
          $qbBillRows = $qbBillStatement->rowCount();
          if($qbBillRows > 0){
             continue;
@@ -51,9 +53,12 @@
          }
 
          $qbAgentName = "ZZ $ Tradewinds Logistics";
-         $agentQuery = "SELECT ClearingAgentId, QBClearingAgentNameFG FROM ClearingAgent WHERE ClearingAgentId = $clearingAgentId";
+         $agentQuery = "SELECT ClearingAgentId, QBClearingAgentNameAAA FROM ClearingAgent WHERE ClearingAgentId = :clearingAgentId";
          $agentStatement = $con_gen->prepare($agentQuery);
-         $agentStatement->execute();
+         $agentStatement->execute(array(
+            ':clearingAgentId'=> $clearingAgentId
+         ));
+
          $agentResults=$agentStatement->fetchAll();
          foreach($agentResults as $agentRow){
             $qbAgentName = $agentRow[1];
@@ -62,10 +67,14 @@
          if(!empty($invoiceNo)){
             $memo = "Flight No- $flightNo Wt - $weight AWB-  $awb, Invoice No - $invoiceNo";
             $amountDueInHomeCurrency = $amountDue * $exchangeRate;
+            $APAccount = "Accounts Payable - $currency";
+            
             $insertQbBills = "INSERT INTO qb_bill(TxnID, TimeCreated, Vendor_FullName, APAccount_FullName, TxnDate, AmountDue, Currency_FullName, ExchangeRate, AmountDueInHomeCurrency, RefNumber, Memo)
-            VALUES('$txnID', NOW(), '$qbAgentName', 'Accounts Payable - $currency', '$date', $amountDue, '$currencyName', '$exchangeRate', $amountDueInHomeCurrency, '$agentInvoiceNo', '$memo');";
+            VALUES(:txnID, :TimeCreated, :qbAgentName, :APAccount, :date, :amountDue, :currency, :exchangeRate, :homeCurrency, :agentInvoiceNo, :memo);";
             $insertQbBillStatement=$con_quickbooks->prepare($insertQbBills);
-            $insertQbBillsResult=$insertQbBillStatement->execute();
+            $insertQbBillsResult=$insertQbBillStatement->execute(array(':txnID' => $txnID, ':TimeCreated' => $timecreated, ':qbAgentName' => $qbAgentName, ':APAccount' => $APAccount,
+            ':date' => $date, ':amountDue' => $amountDue, ':currency' => $currencyName, ':exchangeRate' => $exchangeRate, ':homeCurrency' => $amountDueInHomeCurrency, ':agentInvoiceNo' => $agentInvoiceNo,
+            ':memo' => $memo));
 
             $billLastid = $con_quickbooks->lastInsertId();
             // $dbConnectionString = "$mysql_username:$mysql_password@$mysql_servername:$mysql_port/$mysql_dbname";
@@ -73,17 +82,13 @@
             $billqueue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170:3306/testvegfg2025');
             $billqueue->enqueue(QUICKBOOKS_ADD_BILL, $billLastid, 903);
 
-            $billLines = array();
             $sortOrder = 1;
             $txnLineID = $txnID . '-'. $sortOrder;
-            array_push($billLines, "('$txnID', $sortOrder, '$txnLineID', 'Freight and Shipping Costs', $amountDue, '')");
-
-            $strBillsLines = implode(',', $billLines);
-            if($strBillsLines){
-               $insertBillsQuery = "INSERT INTO qb_bill_expenseline(Bill_TxnID, SortOrder, TxnLineID, Account_FullName, Amount, Memo) VALUES $strBillsLines;";
-               $insertBillStatement=$con_quickbooks->prepare($insertBillsQuery);
-               $insertBillStatement->execute();
-            }
+            $insertBillsQuery = "INSERT INTO qb_bill_expenseline(Bill_TxnID, SortOrder, TxnLineID, Account_FullName, Amount, Memo) 
+            VALUES(:txnID, :sortOrder, :txnLineID, :Account, :Amount, :memo);";
+            $insertBillStatement=$con_quickbooks->prepare($insertBillsQuery);
+            $insertBillStatement->execute(array(':txnID' => $txnID, ':sortOrder' => $sortOrder, ':txnLineID' => $txnLineID, 
+            ':Account' => "Freight and Shipping Costs", ':Amount' => $amountDue, ':memo' => ''));
          }
       }
 
