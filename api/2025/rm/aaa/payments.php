@@ -21,6 +21,9 @@
             continue;
          }
 
+         if(isset($paymentId)){
+            $paymentId = substr($paymentId, 0, 20);
+         }
          $qbPaymentQuery = "SELECT RefNumber FROM qb_receivepayment WHERE RefNumber = :paymentId;";
          $qbPaymentStatement = $con_quickbooks->prepare($qbPaymentQuery);
          $qbPaymentStatement->execute(array(

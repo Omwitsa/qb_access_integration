@@ -25,7 +25,9 @@
          $QBInvoiceNo = $invoiceHeaderRow[6];
          $ref = $invoiceHeaderRow[7];
 
-         $invoiceNo = trim($invoiceNo);
+         if(isset($invoiceNo)){
+            $invoiceNo = substr(trim($invoiceNo), 0, 11);
+         }
          $qbInvoiceQuery = "SELECT RefNumber FROM qb_invoice WHERE RefNumber = :invoiceNo;";
          $qbInvoiceStatement = $con_quickbooks->prepare($qbInvoiceQuery);
          $qbInvoiceStatement->execute(array(

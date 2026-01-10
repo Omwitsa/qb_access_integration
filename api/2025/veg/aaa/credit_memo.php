@@ -29,6 +29,9 @@
          }
          
          $refNo = $creditNoteNo;
+         if(isset($refNo)){
+            $refNo = substr($refNo, 0, 11);
+         }
          $qbIdQuery = "SELECT RefNumber FROM qb_creditmemo WHERE RefNumber = :refNo;";
          $qbIdStatement = $con_quickbooks->prepare($qbIdQuery);
          $qbIdStatement->execute(array(

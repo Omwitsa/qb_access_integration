@@ -23,6 +23,9 @@
          $clearingAgentId = $billRow[9];
          $ref = $billRow[10];
 
+         if(isset($agentInvoiceNo)){
+            $agentInvoiceNo = substr($agentInvoiceNo, 0, 20);
+         }
          $qbBillsQuery = "SELECT RefNumber FROM qb_bill WHERE RefNumber = :agentInvoiceNo";
          $qbBillStatement = $con_quickbooks->prepare($qbBillsQuery);
          $qbBillStatement->execute(array(

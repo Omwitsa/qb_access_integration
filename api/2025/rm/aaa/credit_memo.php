@@ -29,6 +29,9 @@
          }
          
          $refNo = $creditNoteNo;
+         if(isset($refNo)){
+            $refNo = substr($refNo, 0, 11);
+         }
          $qbIdQuery = "SELECT RefNumber FROM qb_creditmemo WHERE RefNumber = :refNo;";
          $qbIdStatement = $con_quickbooks->prepare($qbIdQuery);
          $qbIdStatement->execute(array(
@@ -72,7 +75,7 @@
             $creditNotelastid = $con_quickbooks->lastInsertId();
             // $dbConnectionString = "$mysql_username:$mysql_password@$mysql_servername:$mysql_port/$mysql_dbname";
             // $creditNotequeue = new QuickBooks_WebConnector_Queue('mysqli://'. $dbConnectionString);
-            $creditNotequeue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170:3306/rosesaaa2025');
+            $creditNotequeue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170:3306/testrosesaaa');
             $creditNotequeue->enqueue(QUICKBOOKS_ADD_CREDITMEMO, $creditNotelastid, 903);
 
             $claimLineQuery = "SELECT VarietyId, StemQty, Price, LineValue, StemLength FROM ComplaintLine WHERE ComplaintHeaderId = :claimHeaderId";
