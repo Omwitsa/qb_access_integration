@@ -246,13 +246,13 @@
       $stagedInvoiceCount = $stagedInvoiceCountStatement->fetchColumn();
       $results["stagedInvoiceCount"] = $stagedInvoiceCount;
 
-      $unsynchedInvoiceCountQuery = "SELECT COUNT(*) FROM InvoiceHeader WHERE Finalized = Yes AND ExporterId = 25 AND  QBTransferStatus = 0 AND InvoiceDate Between #1/1/2026# AND #31/12/2026#";
+      $unsynchedInvoiceCountQuery = "SELECT COUNT(*) FROM InvoiceHeader WHERE Finalized = Yes AND ExporterId = 25 AND  QBTransferStatus IS NULL AND InvoiceDate Between #1/1/2026# AND #31/12/2026#";
       $unsynchedInvoiceCountStatement = $con_ho->prepare($unsynchedInvoiceCountQuery);
       $unsynchedInvoiceCountStatement->execute();
       $unsynchedInvoiceCount = $unsynchedInvoiceCountStatement->fetchColumn();
       $results["unsynchedInvoiceCount"] = $unsynchedInvoiceCount;
 
-      $unsynchedAuctionInvoiceCountQuery = "SELECT COUNT(*) FROM AuctionInvoiceHeader WHERE Finalized = Yes AND ExporterId = 25 AND  QBTransferStatus = 0 AND InvoiceDate Between #1/1/2026# AND #31/12/2026#";
+      $unsynchedAuctionInvoiceCountQuery = "SELECT COUNT(*) FROM AuctionInvoiceHeader WHERE Finalized = Yes AND ExporterId = 25 AND  QBTransferStatus IS NULL AND InvoiceDate Between #1/1/2026# AND #31/12/2026#";
       $unsynchedAuctionInvoiceCountStatement = $con_ho->prepare($unsynchedAuctionInvoiceCountQuery);
       $unsynchedAuctionInvoiceCountStatement->execute();
       $unsynchedAuctionInvoiceCount = $unsynchedAuctionInvoiceCountStatement->fetchColumn();

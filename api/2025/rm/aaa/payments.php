@@ -153,7 +153,7 @@
       $stagedCount = $stagedCountStatement->fetchColumn();
       $results["stagedCount"] = $stagedCount;
 
-      $unsynchedCountQuery = "SELECT COUNT(*) FROM CustomerPayment WHERE ExporterId = 24 AND QBTransferStatus = 0 AND PaymentDate Between #6/1/2025# AND #12/31/2026#";
+      $unsynchedCountQuery = "SELECT COUNT(*) FROM CustomerPayment WHERE ExporterId = 24 AND QBTransferStatus IS NULL AND PaymentDate Between #6/1/2025# AND #12/31/2026#";
       $unsynchedCountStatement = $con_ho->prepare($unsynchedCountQuery);
       $unsynchedCountStatement->execute();
       $unsynchedCount = $unsynchedCountStatement->fetchColumn();
