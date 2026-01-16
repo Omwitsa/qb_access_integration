@@ -125,13 +125,16 @@
                $turnover = $invoiceLineRow[5];
                $qnty=$stemQty;
 
-               $productQuery = "SELECT VarietyName FROM Variety WHERE VarietyId=:VarietyId";
+               $productQuery = "SELECT VarietyName, SpeciesId FROM Variety WHERE VarietyId=:VarietyId";
                $productStatement = $con_ho->prepare($productQuery);
                $productStatement->execute(array(
                   ':VarietyId'=> $varietyId
                ));
                $productResult = $productStatement->fetch();
                $varietyName = $productResult['VarietyName'];
+               $speciesId = $productResult['SpeciesId'];
+
+               $item = $speciesId == 2 ? "Summer Flowers" : $item;
                $descrip = $varietyName.' - '.$stemLength;
                $rate=number_format($turnover/$stemQty,3);
                $totalStemQty += $qnty;

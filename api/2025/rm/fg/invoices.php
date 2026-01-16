@@ -5,6 +5,7 @@
    if($_GET["action"] === 'synchRMInvoice'){
       include 'functions.php';
       require_once '../../../../configs/2025/rm/fg/quickbooks.php';
+      
       // $invoiceNo = trim($_GET["invoiceNo"]);
 
       $item='Roses';
@@ -117,7 +118,7 @@
                $qnty=$stemQty;
                
                if($varietyId > 0){ 
-                  $productQuery = "SELECT VarietyName FROM Variety WHERE VarietyId = :varietyId";
+                  $productQuery = "SELECT VarietyName, SpeciesId FROM Variety WHERE VarietyId = :varietyId";
                   $productStatement = $con_gen->prepare($productQuery);
                   $productStatement->execute(array(
                      ':varietyId'=> $varietyId
@@ -125,8 +126,10 @@
                   $productResults=$productStatement->fetchAll();
                   foreach($productResults as $productRow){
                      $varietyname=$productRow[0];
+                     $speciesId=$productRow[1];
                   }
 
+                  $item = $speciesId == 2 ? "Summer Flowers" : $item;
                   $descrip = $varietyname.' - '.$stemLength;
                   $rate=number_format($price,4);
                   $inserInvoiceQuery = 'INSERT INTO qb_invoice_invoiceline(Invoice_TxnID, Item_FullName, Descrip, Quantity, Rate) 
@@ -156,7 +159,7 @@
                      $stemLength=$mixedBoxRow[4];
                      $qnty = $boxQty * $mixedStemQty;
 
-                     $productQuery = "SELECT VarietyName FROM Variety WHERE VarietyId = :varietyId";
+                     $productQuery = "SELECT VarietyName, SpeciesId FROM Variety WHERE VarietyId = :varietyId";
                      $productStatement = $con_gen->prepare($productQuery);
                      $productStatement->execute(array(
                         ':varietyId'=> $varietyId
@@ -164,8 +167,10 @@
                      $productResults=$productStatement->fetchAll();
                      foreach($productResults as $productRow){
                         $varietyname=$productRow[0];
+                        $speciesId=$productRow[1];
                      }
 
+                     $item = $speciesId == 2 ? "Summer Flowers" : $item;
                      $descrip = $varietyname.' - '.$stemLength;
                      $rate=number_format($price,4);
                      $inserInvoiceQuery = 'INSERT INTO qb_invoice_invoiceline(Invoice_TxnID, Item_FullName, Descrip, Quantity, Rate) 
