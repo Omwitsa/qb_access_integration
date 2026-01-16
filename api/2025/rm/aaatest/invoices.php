@@ -7,7 +7,6 @@
       
       include 'functions.php';
       require_once '../../../../configs/2025/rm/aaatest/quickbooks.php';
-      $item='Roses';
       $invoiceHeaderQuery = "SELECT InvoiceHeaderId, ClientId, InvoiceDate, InvoiceNo, ShippingTerms, FlightDate, QBInvoiceNo, Ref, DocumentFee FROM InvoiceHeader WHERE Finalized = Yes AND ExporterId = 24 AND InvoiceDate Between #1/1/2026# AND #31/12/2026# ORDER BY InvoiceHeaderId";
       $invoiceHeaderStatement = $con_ho->prepare($invoiceHeaderQuery);
       $invoiceHeaderStatement->execute();
@@ -128,7 +127,7 @@
                      $speciesId=$productRow[1];
                   }
 
-                  $item = $speciesId == 2 ? "Summer Flowers" : $item;
+                  $item = $speciesId == 2 ? "Summer Flowers" : "Roses";
                   $descrip = $varietyname.' - '.$stemLength;
                   $rate=number_format($price,4);
                   $inserInvoiceQuery = 'INSERT INTO qb_invoice_invoiceline(Invoice_TxnID, Item_FullName, Descrip, Quantity, Rate) 
@@ -169,7 +168,7 @@
                         $speciesId=$productRow[1];
                      }
 
-                     $item = $speciesId == 2 ? "Summer Flowers" : $item;
+                     $item = $speciesId == 2 ? "Summer Flowers" : "Roses";
                      $descrip = $varietyname.' - '.$stemLength;
                      $rate=number_format($price,4);
                      $inserInvoiceQuery = 'INSERT INTO qb_invoice_invoiceline(Invoice_TxnID, Item_FullName, Descrip, Quantity, Rate) 

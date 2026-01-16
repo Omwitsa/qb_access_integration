@@ -7,7 +7,6 @@
    if($_GET["action"] === 'synchRMAuctionInvoice'){
       // $invoiceNo = trim($_GET["invoiceNo"]);
       
-      $item='Roses';
       $invoiceHeaderQuery="SELECT AuctionInvoiceHeaderId, AuctionId, ClientId, InvoiceDate, InvoiceNo, AuctionWeekNo, QBInvoiceNo FROM AuctionInvoiceHeader WHERE Finalized = Yes AND ExporterId = 24 AND InvoiceDate Between #1/1/2026# AND #31/12/2026# ORDER BY AuctionInvoiceHeaderId DESC";
       $invoiceHeaderStatement = $con_ho->prepare($invoiceHeaderQuery);
       $invoiceHeaderStatement->execute();
@@ -135,7 +134,7 @@
                $varietyName = $productResult['VarietyName'];
                $speciesId = $productResult['SpeciesId'];
 
-               $item = $speciesId == 2 ? "Summer Flowers" : $item;
+               $item = $speciesId == 2 ? "Summer Flowers" : "Roses";
                $descrip = $varietyName.' - '.$stemLength;
                $rate=number_format($turnover/$stemQty,3);
                $totalStemQty += $qnty;
