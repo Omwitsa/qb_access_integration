@@ -105,7 +105,7 @@
                   $subitem=str_replace(" ","",substr($productRow[2], 0, 29))."".$productRow[7];
                }
 
-               $itemfullname = "Open Bal"; //  Roses
+               $itemfullname = "VEGETABLES"; //  Roses
                $insertCreditNoteQuery = "INSERT INTO qb_creditmemo_creditmemoline(CreditMemo_TxnID, Item_FullName, Descrip, Quantity, Rate, Amount, SalesTaxCode_FullName) 
                VALUES(:txnID, :itemfullname, :descrip, :quantity, :rate, :Amount, :taxName);";
                $insertCreditNoteStatement=$con_quickbooks->prepare($insertCreditNoteQuery);

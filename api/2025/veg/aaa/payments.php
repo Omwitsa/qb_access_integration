@@ -163,6 +163,7 @@
       $unsynchedCountStatement = $con_ho->prepare($unsynchedCountQuery);
       $unsynchedCountStatement->execute();
       $unsynchedCount = $unsynchedCountStatement->fetchColumn();
+      
       $results["unsynchedCount"] = $unsynchedCount;
 
       $output = new stdClass();

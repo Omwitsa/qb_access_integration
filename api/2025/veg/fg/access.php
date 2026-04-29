@@ -1,5 +1,6 @@
 ﻿<?php
   include 'env.php';
+  $charset = 'utf8mb4';
   $con_ho='';
   $con_gen ='';
 

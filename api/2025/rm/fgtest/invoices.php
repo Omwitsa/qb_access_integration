@@ -227,7 +227,7 @@
 
    if($_GET["action"] === 'getRmFgInvoicesStats'){
       $results["invoices"] = array();
-      $qbInvoicesQuery = "SELECT Customer_FullName, RefNumber, ARAccount_FullName, TxnDate, qbsql_last_errmsg, TimeCreated FROM qb_invoice WHERE qbsql_last_errmsg IS NOT NULL ORDER BY RefNumber DESC;";
+      $qbInvoicesQuery = "SELECT Customer_FullName, RefNumber, ARAccount_FullName, TxnDate, qbsql_last_errmsg, TimeCreated FROM qb_invoice WHERE qbsql_last_errnum NOT IN ('3120', '3171') AND qbsql_last_errmsg IS NOT NULL ORDER BY RefNumber DESC;";
       $qbInvoiceStatement = $con_quickbooks->prepare($qbInvoicesQuery);
       $qbInvoiceStatement->execute();
       $invoicesResults=$qbInvoiceStatement->fetchAll();

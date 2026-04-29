@@ -30,6 +30,7 @@
          $qbPaymentStatement->execute(array(
             ':paymentId'=> $paymentId
          ));
+         
          $qbPaymentRows = $qbPaymentStatement->rowCount();
          if($qbPaymentRows > 0){
             $query="UPDATE CustomerPayment SET QBTransferStatus = :QBTransferStatus WHERE CustomerPaymentId = :paymentId";

@@ -4,10 +4,10 @@
   <AppID>IDNTS_FSAAATWO_2025</AppID>
   <AppURL>http://192.168.1.122:88/VegQbIntegrator/configs/2025/veg/aaatest/mirror.php</AppURL>
   <AppDescription>Veg AAA 2025 Test Quickbooks Web Connectors</AppDescription>
-  <AppSupport>IT SUPPORT</AppSupport>
+  <AppSupport>http://192.168.1.170:88/info.php</AppSupport>
   <UserName>test</UserName>
-  <OwnerID>{3e26e684-d5af-11f0-8354-000c293c2480}</OwnerID>
-  <FileID>{47e9c43d-d5af-11f0-8354-000c293c2480}</FileID>
+  <OwnerID>{e09bbf09-1665-11f1-b4b5-cf77e61bd6de}</OwnerID>
+  <FileID>{efb26b5f-1665-11f1-b4b5-cf77e61bd6de}</FileID>
   <QBType>QBFS</QBType>
   <Style>Document</Style>
   <AuthFlags>0xF</AuthFlags>
