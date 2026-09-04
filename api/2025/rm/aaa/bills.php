@@ -93,7 +93,7 @@
                VALUES(:txnID, :sortOrder, :txnLineID, :Account, :Amount, :memo);";
                $insertBillStatement=$con_quickbooks->prepare($insertBillsQuery);
                $insertBillStatement->execute(array(':txnID' => $txnID, ':sortOrder' => $sortOrder, ':txnLineID' => $txnLineID, 
-               ':Account' => "AA  AIRLINE EXPENSES:Freight Charges", ':Amount' => $taxable, ':memo' => $memo));
+               ':Account' => "A  AIRFREIGHT COSTS:Freight Charges", ':Amount' => $taxable, ':memo' => '<16%>'));
 
                $sortOrder = 2;
                $txnLineID = $txnID . '-'. $sortOrder;
@@ -102,7 +102,7 @@
                VALUES(:txnID, :sortOrder, :txnLineID, :Account, :Amount, :memo);";
                $insertBillStatement=$con_quickbooks->prepare($insertBillsQuery);
                $insertBillStatement->execute(array(':txnID' => $txnID, ':sortOrder' => $sortOrder, ':txnLineID' => $txnLineID, 
-               ':Account' => "AA  AIRLINE EXPENSES:Freight Charges", ':Amount' => $net, ':memo' => '<0%>'));
+               ':Account' => "A  AIRFREIGHT COSTS:Freight Charges", ':Amount' => $net, ':memo' => '<0%>Z'));
 
                $sortOrder = 3;
                $txnLineID = $txnID . '-'. $sortOrder;
@@ -110,7 +110,7 @@
                VALUES(:txnID, :sortOrder, :txnLineID, :Account, :Amount, :memo);";
                $insertBillStatement=$con_quickbooks->prepare($insertBillsQuery);
                $insertBillStatement->execute(array(':txnID' => $txnID, ':sortOrder' => $sortOrder, ':txnLineID' => $txnLineID, 
-               ':Account' => "KSHS II:VAT BANK", ':Amount' => $vat, ':memo' => 'VAT'));
+               ':Account' => "KSHS II:VAT BANK", ':Amount' => $vat, ':memo' => 'VAT16%'));
             }
             else{
                $sortOrder = 1;
@@ -119,7 +119,7 @@
                VALUES(:txnID, :sortOrder, :txnLineID, :Account, :Amount, :memo);";
                $insertBillStatement=$con_quickbooks->prepare($insertBillsQuery);
                $insertBillStatement->execute(array(':txnID' => $txnID, ':sortOrder' => $sortOrder, ':txnLineID' => $txnLineID, 
-               ':Account' => "AA  AIRLINE EXPENSES:Freight Charges", ':Amount' => $amountDue, ':memo' => '<0%>'));
+               ':Account' => "A  AIRFREIGHT COSTS:Freight Charges", ':Amount' => $amountDue, ':memo' => '<0%>Z'));
             }
          }
       }
@@ -133,7 +133,7 @@
    }
    if($_GET["action"] === 'getRMaaaBillsStats'){
       $results["items"] = array();
-      $qbQuery = "SELECT Vendor_FullName, RefNumber, APAccount_FullName, TxnDate, qbsql_last_errmsg, TimeCreated FROM qb_bill WHERE qbsql_last_errmsg IS NOT NULL ORDER BY RefNumber DESC;";
+      $qbQuery = "SELECT Vendor_FullName, RefNumber, APAccount_FullName, TxnDate, qbsql_last_errmsg, TimeCreated FROM qb_bill WHERE qbsql_last_errmsg IS NOT NULL ORDER BY RefNumber DESC LIMIT 20;";
       $qbStatement = $con_quickbooks->prepare($qbQuery);
       $qbStatement->execute();
       $qbResults=$qbStatement->fetchAll();

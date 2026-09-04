@@ -4,4 +4,10 @@
   $mysql_username = "IT_ADMIN";
   $mysql_password = "sysadmin2018";
   $mysql_dbname = "testrosesaaa";
+
+  $mis_servername = "192.168.1.122";
+  $mis_port = "3306";
+  $mis_username = "ingress";
+  $mis_password = "ingress";
+  $mis_dbname = "aaamis";
 ?>

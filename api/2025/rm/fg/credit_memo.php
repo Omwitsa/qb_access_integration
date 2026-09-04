@@ -5,7 +5,7 @@
    if($_GET["action"] === 'syncRmCreditNotes'){
       require_once '../../../../configs/2025/rm/fg/quickbooks.php';
 
-      $creditNoteQuery = "SELECT CreditNoteId, CreditNoteNo, CreditNoteDate, CreditNoteValue, ClientId, Notes FROM CreditNote WHERE ExporterId = 25 AND CreditNoteDate Between #7/12/2025# And #12/31/2026#  ORDER BY CreditNoteId";
+      $creditNoteQuery = "SELECT CreditNoteId, CreditNoteNo, CreditNoteDate, CreditNoteValue, ClientId, Notes FROM CreditNote WHERE ExporterId = 25 AND CreditNoteDate Between #9/4/2026# And #12/31/2026#  ORDER BY CreditNoteId";
       $creditNoteStatement = $con_ho->prepare($creditNoteQuery);
       $creditNoteStatement->execute();
       $creditNoteResults=$creditNoteStatement->fetchAll();
@@ -18,20 +18,15 @@
          $amount = $creditNoteRow[3];
          $custId = $creditNoteRow[4];
 
-         $claimHeaderQuery = "SELECT ComplaintHeaderId, InvoiceHeaderId FROM ComplaintHeader WHERE CreditNoteId = :creditNoteId";
-         $claimHeaderStatement = $con_ho->prepare($claimHeaderQuery);
-         $claimHeaderStatement->execute(array(
-            ':creditNoteId'=> $creditNoteId
-         ));
-         $claimHeaderResults=$claimHeaderStatement->fetchAll();
-         foreach($claimHeaderResults as $claimHeaderRow){
-            $claimHeaderId = $claimHeaderRow[0];
-         }
-         
          $refNo = $creditNoteNo;
          if(isset($refNo)){
+            if(strlen($refNo) > 7){
+               $refNo = str_replace("/", "", substr($refNo, 3));
+            }
+            
             $refNo = substr($refNo, 0, 11);
          }
+         
          $qbIdQuery = "SELECT RefNumber FROM qb_creditmemo WHERE RefNumber = :refNo;";
          $qbIdStatement = $con_quickbooks->prepare($qbIdQuery);
          $qbIdStatement->execute(array(
@@ -79,31 +74,19 @@
             $creditNotequeue = new QuickBooks_WebConnector_Queue('mysqli://IT_ADMIN:sysadmin2018@192.168.1.170:3306/rosesfg2025');
             $creditNotequeue->enqueue(QUICKBOOKS_ADD_CREDITMEMO, $creditNotelastid, 903);
 
-            $claimLineQuery = "SELECT VarietyId, StemQty, Price, LineValue, StemLength FROM ComplaintLine WHERE ComplaintHeaderId = :claimHeaderId";
-            $claimLineStatement = $con_ho->prepare($claimLineQuery);
-            $claimLineStatement->execute(array(
-               ':claimHeaderId'=> $claimHeaderId
+            $lineQuery = "SELECT Price, Qty, LineValue, Description, InvoiceLineId FROM CreditNoteLine WHERE CreditNoteId =:creditNoteId;";
+            $lineStatement = $con_ho->prepare($lineQuery);
+            $lineStatement->execute(array(
+               ':creditNoteId'=> $creditNoteId
             ));
-            $claimLineResults=$claimLineStatement->fetchAll();
-            foreach($claimLineResults as $claimLineRow){
-               $productId=$claimLineRow[0] ? $claimLineRow[0] : 0;
-               $quantity=$claimLineRow[1] ? $claimLineRow[1] : 0;
-               $rate=$claimLineRow[2] ? $claimLineRow[2] : 0;
-               $lineAmount=$claimLineRow[3] ? $claimLineRow[3] : 0;
-               $length=$claimLineRow[4];
+            $lineResults=$lineStatement->fetchAll();
+            foreach($lineResults as $lineRow){
+               $rate=$lineRow[0];
+               $quantity=$lineRow[1];
+               $lineAmount=$lineRow[2];
+               $descrip=$lineRow[3];
 
-               $custCategoryId = 0;
-               $productQuery = "SELECT VarietyName FROM Variety WHERE VarietyId = :productId;";
-               $productStatement = $con_gen->prepare($productQuery);
-               $productStatement->execute(array(
-                  ':productId'=> $productId
-               ));
-               $productResults=$productStatement->fetchAll();
-               foreach($productResults as $productRow){
-                  $descrip=$productRow[0]."".$length; // Credit Notes, Credit note flowers
-               }
-
-               $itemfullname = "Roses"; 
+               $itemfullname = "Roses";
                $insertCreditNoteQuery = "INSERT INTO qb_creditmemo_creditmemoline(CreditMemo_TxnID, Item_FullName, Descrip, Quantity, Rate, Amount, SalesTaxCode_FullName) 
                VALUES(:txnID, :itemfullname, :descrip, :quantity, :rate, :Amount, :taxName);";
                $insertCreditNoteStatement=$con_quickbooks->prepare($insertCreditNoteQuery);
@@ -129,7 +112,7 @@
    }
    if($_GET["action"] === 'getRmFgCreditNotesStats'){
       $results["items"] = array();
-      $qbInvoicesQuery = "SELECT Customer_FullName, RefNumber, ARAccount_FullName, TxnDate, qbsql_last_errmsg, TimeCreated FROM qb_creditmemo WHERE qbsql_last_errmsg IS NOT NULL ORDER BY RefNumber DESC;";
+      $qbInvoicesQuery = "SELECT Customer_FullName, RefNumber, ARAccount_FullName, TxnDate, qbsql_last_errmsg, TimeCreated FROM qb_creditmemo WHERE qbsql_last_errmsg IS NOT NULL ORDER BY RefNumber DESC LIMIT 20;";
       $qbInvoiceStatement = $con_quickbooks->prepare($qbInvoicesQuery);
       $qbInvoiceStatement->execute();
       $invoicesResults=$qbInvoiceStatement->fetchAll();
@@ -151,7 +134,7 @@
       $stagedCount = $stagedCountStatement->fetchColumn();
       $results["stagedCount"] = $stagedCount;
 
-      $unsynchedCountQuery = "SELECT COUNT(*) FROM CreditNote WHERE ExporterId = 25 AND QBTransferStatus IS NULL AND CreditNoteDate Between #7/12/2025# And #12/31/2026#";
+      $unsynchedCountQuery = "SELECT COUNT(*) FROM CreditNote WHERE ExporterId = 25 AND QBTransferStatus IS NULL AND CreditNoteDate Between #9/4/2026# And #12/31/2026#";
       $unsynchedCountStatement = $con_ho->prepare($unsynchedCountQuery);
       $unsynchedCountStatement->execute();
       $unsynchedCount = $unsynchedCountStatement->fetchColumn();

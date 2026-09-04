@@ -131,7 +131,7 @@
    }
    if($_GET["action"] === 'getRmAaaPayments'){
       $results["items"] = array();
-      $qbQuery = "SELECT Customer_FullName, RefNumber, ARAccount_FullName, TxnDate, qbsql_last_errmsg, TimeCreated FROM qb_receivepayment WHERE qbsql_last_errmsg IS NOT NULL ORDER BY RefNumber DESC;";
+      $qbQuery = "SELECT Customer_FullName, RefNumber, ARAccount_FullName, TxnDate, qbsql_last_errmsg, TimeCreated FROM qb_receivepayment WHERE qbsql_last_errmsg IS NOT NULL ORDER BY RefNumber DESC LIMIT 20;";
       $qbStatement = $con_quickbooks->prepare($qbQuery);
       $qbStatement->execute();
       $qbResults=$qbStatement->fetchAll();
@@ -153,7 +153,7 @@
       $stagedCount = $stagedCountStatement->fetchColumn();
       $results["stagedCount"] = $stagedCount;
 
-      $unsynchedCountQuery = "SELECT COUNT(*) FROM CustomerPayment WHERE ExporterId = 24 AND QBTransferStatus IS NULL AND PaymentDate Between #6/1/2025# AND #12/31/2026#";
+      $unsynchedCountQuery = "SELECT COUNT(*) FROM CustomerPayment WHERE ForeignAmountPaid > 0 AND ExporterId = 24 AND QBTransferStatus IS NULL AND PaymentDate Between #6/1/2025# AND #12/31/2026#";
       $unsynchedCountStatement = $con_ho->prepare($unsynchedCountQuery);
       $unsynchedCountStatement->execute();
       $unsynchedCount = $unsynchedCountStatement->fetchColumn();

@@ -16,6 +16,16 @@
     echo "Connection failed: " . $e->getMessage();
   }
 
+  // try {
+  //   $con_mis = new PDO("mysql:host=$mis_servername;dbname=$mis_dbname;charset=utf8mb4", $mis_username, $mis_password);
+  //   $pdo->exec("SET NAMES utf8mb4");
+  //   $con_mis->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+  // }
+  // catch(PDOException $e)
+  // {
+  //   echo "Connection failed: " . $e->getMessage();
+  // }
+
   if (!file_exists($ho_path)) {
     die("ho Access database file not found(Ho Data) !");
   }

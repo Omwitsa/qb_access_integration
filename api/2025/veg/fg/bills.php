@@ -31,7 +31,6 @@
          $qbBillStatement->execute(array(
             ':agentInvoiceNo'=> $agentInvoiceNo
          ));
-
          $qbBillRows = $qbBillStatement->rowCount();
          if($qbBillRows > 0){
             continue;
@@ -89,10 +88,10 @@
             $sortOrder = 1;
             $txnLineID = $txnID . '-'. $sortOrder;
             $insertBillsQuery = "INSERT INTO qb_bill_expenseline(Bill_TxnID, SortOrder, TxnLineID, Account_FullName, Amount, Memo) 
-               VALUES(:txnID, :sortOrder, :txnLineID, :Account, :Amount, :memo);";
-               $insertBillStatement=$con_quickbooks->prepare($insertBillsQuery);
-               $insertBillStatement->execute(array(':txnID' => $txnID, ':sortOrder' => $sortOrder, ':txnLineID' => $txnLineID, 
-               ':Account' => "Freight and Shipping Costs", ':Amount' => $amountDue, ':memo' => ''));
+            VALUES(:txnID, :sortOrder, :txnLineID, :Account, :Amount, :memo);";
+            $insertBillStatement=$con_quickbooks->prepare($insertBillsQuery);
+            $insertBillStatement->execute(array(':txnID' => $txnID, ':sortOrder' => $sortOrder, ':txnLineID' => $txnLineID, 
+            ':Account' => "Freight and Shipping Costs", ':Amount' => $amountDue, ':memo' => '<0%>Z'));
          }
       }
 
@@ -105,7 +104,7 @@
    }
    if($_GET["action"] === 'getVegFgBillsStats'){
       $results["items"] = array();
-      $qbQuery = "SELECT Vendor_FullName, RefNumber, APAccount_FullName, TxnDate, qbsql_last_errmsg, TimeCreated FROM qb_bill WHERE qbsql_last_errmsg IS NOT NULL ORDER BY RefNumber DESC;";
+      $qbQuery = "SELECT Vendor_FullName, RefNumber, APAccount_FullName, TxnDate, qbsql_last_errmsg, TimeCreated FROM qb_bill WHERE qbsql_last_errmsg IS NOT NULL ORDER BY RefNumber DESC LIMIT 20;";
       $qbStatement = $con_quickbooks->prepare($qbQuery);
       $qbStatement->execute();
       $qbResults=$qbStatement->fetchAll();
